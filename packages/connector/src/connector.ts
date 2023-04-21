@@ -8,7 +8,7 @@ import { StrategyBase } from '@packages/strategy';
 export class Connector implements Partial<IConnector> {
 	constructor(private strategy: StrategyBase, private connector: IConnector) {}
 
-	run(): void {
+	async run(): Promise<void> {
 		this.connector.on(
 			ConnectorEvent.Authenticated,
 			(context: Context): void => {

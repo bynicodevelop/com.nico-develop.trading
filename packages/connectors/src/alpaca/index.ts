@@ -133,14 +133,14 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 
 				resolve();
 			});
+
+			this.service.connect();
 		});
 
 		if (this.context.getSymbols().length === 0) {
 			console.error('AlpacaConnector: no symbol found');
 			return;
 		}
-
-		console.log('AlpacaConnector: subscribing for quotes');
 
 		this.service.subscribeForQuotes(
 			this.context.getSymbols().map((symbol): string => symbol.name)
@@ -171,7 +171,5 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 			this.context.setOHLC(ohlc);
 			this.emit(ConnectorEvent.OHLC, this.context);
 		});
-
-		this.service.connect();
 	}
 }
