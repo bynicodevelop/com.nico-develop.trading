@@ -1,0 +1,17 @@
+{
+    "tabWidth": 2,
+    "useTabs": true,
+    "printWidth": 80,
+    "trailingComma": "es5",
+    "semi": true,
+    "singleQuote": true,
+    "compilerOptions": {
+      "esModuleInterop": true,
+      "module": "commonjs",
+      "target": "es2015",
+      "outDir": "./dist",
+      "strict": true,
+      "sourceMap": true
+    }
+  }
+  

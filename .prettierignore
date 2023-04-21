@@ -1,0 +1,5 @@
+*.md
+*.js
+*.map
+/dist
+/node_modules

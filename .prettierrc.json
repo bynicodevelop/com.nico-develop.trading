@@ -1,0 +1,18 @@
+{
+	"tabWidth": 2,
+	"useTabs": true,
+	"semi": true,
+	"singleQuote": true,
+	"ignorePath": ".prettierignore",
+	"overrides": [
+		{
+			"files": "*.ts",
+			"options": {
+				"trailingComma": "es5",
+				"functionDeclaration": "always",
+				"parameter": "multiline",
+				"sortImports": true
+			}
+		}
+	]
+}

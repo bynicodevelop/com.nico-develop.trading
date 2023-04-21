@@ -1,0 +1,15 @@
+{
+	"name": "@packages/connectors",
+	"version": "1.0.0",
+	"main": "index.ts",
+	"scripts": {},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@alpacahq/alpaca-trade-api": "^2.16.1",
+		"@master-chief/alpaca": "^6.3.20",
+		"@packages/common": "workspace:^",
+		"@packages/strategy": "workspace:^"
+	}
+}
