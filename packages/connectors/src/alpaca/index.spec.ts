@@ -100,12 +100,11 @@ describe('AlpacaConnector', () => {
 		it('should emit the Authenticated event after a successful connection', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context();
-
-			connector['context'] = context;
-
 			const authenticatedListener = jest.fn((ctx: Context): void => {
 				expect(ctx).toEqual(context);
 			});
+
+			connector['context'] = context;
 
 			connector.on(ConnectorEvent.Authenticated, authenticatedListener);
 
@@ -117,6 +116,7 @@ describe('AlpacaConnector', () => {
 		it('should check subscribeForQuotes is call', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context();
+			alpacaServiceMock.subscribeForQuotes = jest.fn();
 
 			context['symbols'] = [
 				{
@@ -126,8 +126,7 @@ describe('AlpacaConnector', () => {
 			];
 
 			connector['context'] = context;
-
-			alpacaServiceMock.subscribeForQuotes = jest.fn();
+			connector['getHistoricalOHLC'] = jest.fn();
 
 			await connector.run();
 
@@ -149,7 +148,7 @@ describe('AlpacaConnector', () => {
 			];
 
 			connector['context'] = context;
-
+			connector['getHistoricalOHLC'] = jest.fn();
 			alpacaServiceMock.subscribeForBars = jest.fn();
 
 			await connector.run();
@@ -163,6 +162,9 @@ describe('AlpacaConnector', () => {
 		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context();
+			const tickListener = jest.fn((ctx: Context): void => {
+				expect(ctx).toEqual(context);
+			});
 
 			context['symbols'] = [
 				{
@@ -172,11 +174,7 @@ describe('AlpacaConnector', () => {
 			];
 
 			connector['context'] = context;
-
-			const tickListener = jest.fn((ctx: Context): void => {
-				expect(ctx).toEqual(context);
-			});
-
+			connector['getHistoricalOHLC'] = jest.fn();
 			connector.on(ConnectorEvent.Tick, tickListener);
 
 			const tick = {
@@ -204,6 +202,9 @@ describe('AlpacaConnector', () => {
 		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context();
+			const barListener = jest.fn((ctx: Context): void => {
+				expect(ctx).toEqual(context);
+			});
 
 			context['symbols'] = [
 				{
@@ -213,11 +214,7 @@ describe('AlpacaConnector', () => {
 			];
 
 			connector['context'] = context;
-
-			const barListener = jest.fn((ctx: Context): void => {
-				expect(ctx).toEqual(context);
-			});
-
+			connector['getHistoricalOHLC'] = jest.fn();
 			connector.on(ConnectorEvent.OHLC, barListener);
 
 			const bar = {

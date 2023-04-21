@@ -63,16 +63,18 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 		return this.context.getSymbols().map((symbol): string => symbol.name);
 	}
 
-	private async getHistoricalOHLC(): Promise<OHLC[]> {
+	private async getHistoricalOHLC(
+		start: Date,
+		end = new Date(),
+		timeframe = '1Min'
+	): Promise<OHLC[]> {
 		let done = false;
 		const listOfOHLC: OHLC[] = [];
 
-		const date = new Date();
-
 		const stream = this.service.getCryptoBars(this.getSymbolNameList(), {
-			timeframe: '1Min',
-			start: subtractTimeFromDate(date, 0, 20, 0, 0).toISOString(),
-			end: subtractTimeFromDate(date, 0, 1, 0, 0).toISOString(),
+			timeframe,
+			start: start.toISOString(),
+			end: end.toISOString(),
 		});
 
 		while (!done) {
@@ -141,6 +143,18 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 			console.error('AlpacaConnector: no symbol found');
 			return;
 		}
+
+		const date = new Date();
+
+		const historicalOHLC = await this.getHistoricalOHLC(
+			subtractTimeFromDate(date, 0, 20, 0, 0),
+			subtractTimeFromDate(date, 0, 1, 0, 0),
+			'1Min'
+		);
+
+		this.context.setOHLC(historicalOHLC);
+
+		this.emit(ConnectorEvent.HistoricalOHLC, this.context);
 
 		this.service.subscribeForQuotes(this.getSymbolNameList());
 
