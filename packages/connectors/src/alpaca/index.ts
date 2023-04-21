@@ -59,17 +59,17 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 		);
 	}
 
-	private async getHistoricalOHLC(): Promise<void> {
+	private getSymbolNameList(): string[] {
+		return this.context.getSymbols().map((symbol): string => symbol.name);
+	}
+
+	private async getHistoricalOHLC(): Promise<OHLC[]> {
 		let done = false;
 		const listOfOHLC: OHLC[] = [];
 
-		const symbols = this.context
-			.getSymbols()
-			.map((symbol): string => symbol.name);
-
 		const date = new Date();
 
-		const stream = this.service.getCryptoBars(symbols, {
+		const stream = this.service.getCryptoBars(this.getSymbolNameList(), {
 			timeframe: '1Min',
 			start: subtractTimeFromDate(date, 0, 20, 0, 0).toISOString(),
 			end: subtractTimeFromDate(date, 0, 1, 0, 0).toISOString(),
@@ -115,7 +115,7 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 			}
 		}
 
-		console.log(listOfOHLC);
+		return listOfOHLC;
 	}
 
 	private isCurrentSymbol(exchangeName: string): boolean {
@@ -142,13 +142,9 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 			return;
 		}
 
-		this.service.subscribeForQuotes(
-			this.context.getSymbols().map((symbol): string => symbol.name)
-		);
+		this.service.subscribeForQuotes(this.getSymbolNameList());
 
-		this.service.subscribeForBars(
-			this.context.getSymbols().map((symbol): string => symbol.name)
-		);
+		this.service.subscribeForBars(this.getSymbolNameList());
 
 		this.service.onError((error): void => {
 			console.error('AlpacaConnector: error', error);

@@ -56,6 +56,38 @@ describe('AlpacaConnector', () => {
 });
 
 describe('AlpacaConnector', () => {
+	describe('getSymbolNameList', () => {
+		it('should return an array with the names of the symbols in the context', () => {
+			const connector = new AlpacaConnector({} as AlpacaService);
+			const symbol1 = {
+				name: 'BTCUSD',
+				exchangeName: ExchangeCrypto.ERSX,
+			} as Symbol;
+			const symbol2 = {
+				name: 'ETHUSD',
+				exchangeName: ExchangeCrypto.ERSX,
+			} as Symbol;
+			connector['context'] = new Context();
+			connector['context']['symbols'] = [symbol1, symbol2];
+
+			const result = connector['getSymbolNameList']();
+
+			expect(result).toEqual(['BTCUSD', 'ETHUSD']);
+		});
+
+		it('should return an empty array if there are no symbols in the context', () => {
+			const connector = new AlpacaConnector({} as AlpacaService);
+			connector['context'] = new Context();
+			connector['context']['symbols'] = [];
+
+			const result = connector['getSymbolNameList']();
+
+			expect(result).toEqual([]);
+		});
+	});
+});
+
+describe('AlpacaConnector', () => {
 	describe('run', () => {
 		beforeEach(() => {
 			jest.clearAllMocks();
