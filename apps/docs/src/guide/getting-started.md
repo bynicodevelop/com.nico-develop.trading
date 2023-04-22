@@ -1,6 +1,6 @@
 # Démarrage rapide
 
-## Configuration d'une stratégie
+## Structure d'une stratégie
 
 Dans le dossier `strategies` créer un dossier de stratégie avec la structure suivante :
 
@@ -12,6 +12,8 @@ strategies
 	│   package.json
 	│   tsconfig.json
 ```
+
+## Initialisation du projet
 
 Pour créer le projet, il suffit de lancer la commande suivante :
 
@@ -53,4 +55,15 @@ Pensez à installer les dépendances :
 $ pnpm install
 ```
 
-> **Note** : Mettez vous à la racine globale du projet et non dans le dossier.
+> **Note** : Mettez vous à la racine globale du projet et non dans le dossier pour installer toutes les dépendances du projet.
+
+## Fichier de configuration
+
+Créer un fichier `.env` à la racine votre stratégie (même niveau que votre fichier `index.ts`) avec la configuration suivante :
+
+```bash
+# Clé d'API
+KEY=******
+## Clé secrète
+SECRET=******
+```
