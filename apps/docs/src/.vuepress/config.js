@@ -49,7 +49,9 @@ module.exports = {
           collapsable: false,
           children: [
             '',
-            'structure-strategy',
+            'getting-started',
+            'create-strategy',
+            'methods-strategy',
           ]
         }
       ],

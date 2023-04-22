@@ -1,6 +1,11 @@
-# Structure d'une stratégie
+# Création d'une stratégie
 
-## Création d'un fichier de stratégie
+La création d'une stratégie se fait en 2 étapes :
+
+- Définition d'une stratégie
+- Démarrage d'une stratégie
+
+## Définition d'une stratégie
 
 Une stratégie est un fichier JavaScript. La class `StrategyBase` est une interface qui permet de définir les méthodes utilisées par le moteur de stratégie.
 
