@@ -1,3 +1,4 @@
+import { IModel } from './imodel';
 import { Symbol } from './symbol';
 
 interface IOHLC {
@@ -10,7 +11,7 @@ interface IOHLC {
 	timestamp: Date;
 }
 
-export class OHLC implements IOHLC {
+export class OHLC implements IOHLC, IModel {
 	symbol: Symbol;
 	open: number;
 	high: number;

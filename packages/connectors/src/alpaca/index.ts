@@ -8,6 +8,7 @@ import {
 	ConnectorEvent,
 	Context,
 	IConnector,
+	IConnectorService,
 	OHLC,
 	subtractTimeFromDate,
 	Symbol,
@@ -15,15 +16,21 @@ import {
 } from '@packages/common';
 import { ExchangeCrypto } from '@packages/common/src/enums/exchanges-crypto';
 
-import { AlpacaService } from './service';
+import { Indicator } from '../../../indicators';
+import { OrderService } from '../../../orders';
 
 export * from './service';
 
 export class AlpacaConnector extends EventEmitter implements IConnector {
-	private context = new Context();
+	private context: Context;
 
-	constructor(private service: AlpacaService) {
+	constructor(private service: IConnectorService) {
 		super();
+
+		const orderService: OrderService = new OrderService(this.service);
+		const indicator: Indicator = new Indicator();
+
+		this.context = new Context(orderService, indicator);
 	}
 
 	private cryptoQuoteToTick(quote: CryptoQuote): Tick | null {

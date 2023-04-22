@@ -1,5 +1,6 @@
 import { Indicator } from '../../../indicators';
 import { IIndicator } from '../../../indicators/src/iindicator';
+import { OrderService } from '../../../orders';
 import { OHLC } from '../models/ohlc';
 import { Symbol } from '../models/symbol';
 import { Tick } from '../models/tick';
@@ -8,7 +9,11 @@ export class Context {
 	private symbols: Symbol[] = [];
 	private ticks: Tick[] = [];
 	private ohlc: OHLC[] = [];
-	private indicator: Indicator = new Indicator();
+
+	constructor(
+		private orderService: OrderService,
+		private indicator: Indicator
+	) {}
 
 	public getSymbols(): Symbol[] {
 		return this.symbols;
@@ -59,5 +64,9 @@ export class Context {
 
 	getIndicator(name?: string): IIndicator | IIndicator[] {
 		return this.indicator.get(name);
+	}
+
+	getOrderService(): OrderService {
+		return this.orderService;
 	}
 }

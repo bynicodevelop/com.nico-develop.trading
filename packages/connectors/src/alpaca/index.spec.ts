@@ -5,6 +5,8 @@ import {
 import { ExchangeCrypto } from '@packages/common/src/enums/exchanges-crypto';
 import { Symbol } from '@packages/common/src/models/symbol';
 
+import { Indicator } from '../../../indicators';
+import { OrderService } from '../../../orders';
 import {
 	AlpacaConnector,
 	AlpacaService,
@@ -21,6 +23,9 @@ const alpacaServiceMock: AlpacaService = {
 	getCryptoBars: jest.fn(),
 } as unknown as AlpacaService;
 
+const orderService = {} as unknown as OrderService;
+const indicator = {} as unknown as Indicator;
+
 describe('AlpacaConnector', () => {
 	describe('isCurrentSymbol', () => {
 		it('should return true if the symbol is in the context', () => {
@@ -30,7 +35,7 @@ describe('AlpacaConnector', () => {
 				exchangeName: ExchangeCrypto.ERSX,
 			} as Symbol;
 
-			connector['context'] = new Context();
+			connector['context'] = new Context(orderService, indicator);
 			connector['context']['symbols'] = [symbol];
 
 			const result = connector['isCurrentSymbol'](ExchangeCrypto.ERSX);
@@ -45,7 +50,7 @@ describe('AlpacaConnector', () => {
 				exchangeName: ExchangeCrypto.ERSX,
 			} as Symbol;
 
-			connector['context'] = new Context();
+			connector['context'] = new Context(orderService, indicator);
 			connector['context']['symbols'] = [symbol];
 
 			const result = connector['isCurrentSymbol'](ExchangeCrypto.BNCU);
@@ -67,7 +72,7 @@ describe('AlpacaConnector', () => {
 				name: 'ETHUSD',
 				exchangeName: ExchangeCrypto.ERSX,
 			} as Symbol;
-			connector['context'] = new Context();
+			connector['context'] = new Context(orderService, indicator);
 			connector['context']['symbols'] = [symbol1, symbol2];
 
 			const result = connector['getSymbolNameList']();
@@ -77,7 +82,7 @@ describe('AlpacaConnector', () => {
 
 		it('should return an empty array if there are no symbols in the context', () => {
 			const connector = new AlpacaConnector({} as AlpacaService);
-			connector['context'] = new Context();
+			connector['context'] = new Context(orderService, indicator);
 			connector['context']['symbols'] = [];
 
 			const result = connector['getSymbolNameList']();
@@ -99,7 +104,7 @@ describe('AlpacaConnector', () => {
 
 		it('should emit the Authenticated event after a successful connection', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
-			const context = new Context();
+			const context = new Context(orderService, indicator);
 			const authenticatedListener = jest.fn((ctx: Context): void => {
 				expect(ctx).toEqual(context);
 			});
@@ -115,7 +120,7 @@ describe('AlpacaConnector', () => {
 
 		it('should check subscribeForQuotes is call', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
-			const context = new Context();
+			const context = new Context(orderService, indicator);
 			alpacaServiceMock.subscribeForQuotes = jest.fn();
 
 			context['symbols'] = [
@@ -138,7 +143,7 @@ describe('AlpacaConnector', () => {
 
 		it('should check subscribeForBars is call', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
-			const context = new Context();
+			const context = new Context(orderService, indicator);
 
 			context['symbols'] = [
 				{
@@ -161,7 +166,7 @@ describe('AlpacaConnector', () => {
 
 		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
-			const context = new Context();
+			const context = new Context(orderService, indicator);
 			const tickListener = jest.fn((ctx: Context): void => {
 				expect(ctx).toEqual(context);
 			});
@@ -201,7 +206,7 @@ describe('AlpacaConnector', () => {
 
 		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async () => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
-			const context = new Context();
+			const context = new Context(orderService, indicator);
 			const barListener = jest.fn((ctx: Context): void => {
 				expect(ctx).toEqual(context);
 			});

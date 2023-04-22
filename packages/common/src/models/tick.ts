@@ -1,3 +1,4 @@
+import { IModel } from './imodel';
 import { Symbol } from './symbol';
 
 interface ITick {
@@ -10,7 +11,7 @@ interface ITick {
 	timestamp: Date;
 }
 
-export class Tick implements ITick {
+export class Tick implements ITick, IModel {
 	symbol: Symbol;
 	askPrice: number;
 	askSize: number;
