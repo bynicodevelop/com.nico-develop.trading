@@ -38,8 +38,8 @@ module.exports = {
         link: '/guide/',
       },
       {
-        text: 'Config',
-        link: '/config/'
+        text: 'API',
+        link: '/api/'
       }
     ],
     sidebar: {
@@ -55,6 +55,21 @@ module.exports = {
           ]
         }
       ],
+      '/api/': [
+        {
+          title: 'API',
+          collapsable: false,
+          children: [
+            '',
+            'account',
+            'common',
+            'connector',
+            'connectors',
+            'indicators',
+            'strategy',
+          ]
+        }
+      ]
     }
   },
 
