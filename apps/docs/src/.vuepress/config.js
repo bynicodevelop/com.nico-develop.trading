@@ -66,6 +66,7 @@ module.exports = {
             'connector',
             'connectors',
             'indicators',
+            'order',
             'strategy',
           ]
         }
