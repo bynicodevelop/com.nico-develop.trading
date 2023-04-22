@@ -5,6 +5,8 @@ import {
 } from '@packages/common';
 import { StrategyBase } from '@packages/strategy';
 
+import { IIndicator } from '../../indicators/src/iindicator';
+
 export class Connector implements Partial<IConnector> {
 	constructor(private strategy: StrategyBase, private connector: IConnector) {}
 
@@ -22,9 +24,26 @@ export class Connector implements Partial<IConnector> {
 		});
 
 		this.connector.on(ConnectorEvent.OHLC, (context: Context): void => {
+			const indicators = context.getIndicator() as IIndicator[];
+
+			for (const indicator of indicators) {
+				indicator.nextValue(context.getLastOHLC());
+			}
+
 			this.strategy.run(context);
 			this.strategy.onBar(context);
 		});
+
+		this.connector.on(
+			ConnectorEvent.HistoricalOHLC,
+			(context: Context): void => {
+				const indicators = context.getIndicator() as IIndicator[];
+
+				for (const indicator of indicators) {
+					indicator.init(context.getOHLC());
+				}
+			}
+		);
 
 		this.connector.run();
 	}

@@ -208,8 +208,18 @@ describe('Context', (): void => {
 	describe('getIndicator', (): void => {
 		it('should return all indicators when no name is provided', (): void => {
 			const context = new Context();
-			const mockIndicator1 = { name: 'test1', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-			const mockIndicator2 = { name: 'test2', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
+			const mockIndicator1 = {
+				name: 'test1',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
+			const mockIndicator2 = {
+				name: 'test2',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
 			context.addIndicator(mockIndicator1);
 			context.addIndicator(mockIndicator2);
 			expect(context.getIndicator()).toEqual([mockIndicator1, mockIndicator2]);
@@ -217,8 +227,18 @@ describe('Context', (): void => {
 
 		it('should return the indicator with the specified name', (): void => {
 			const context = new Context();
-			const mockIndicator1 = { name: 'test1', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-			const mockIndicator2 = { name: 'test2', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
+			const mockIndicator1 = {
+				name: 'test1',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
+			const mockIndicator2 = {
+				name: 'test2',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
 			context.addIndicator(mockIndicator1);
 			context.addIndicator(mockIndicator2);
 			expect(context.getIndicator('test2')).toBe(mockIndicator2);
@@ -226,8 +246,18 @@ describe('Context', (): void => {
 
 		it('should return undefined if the specified indicator does not exist', (): void => {
 			const context = new Context();
-			const mockIndicator1 = { name: 'test1', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-			const mockIndicator2 = { name: 'test2', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
+			const mockIndicator1 = {
+				name: 'test1',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
+			const mockIndicator2 = {
+				name: 'test2',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
 			context.addIndicator(mockIndicator1);
 			context.addIndicator(mockIndicator2);
 			expect(context.getIndicator('test3')).toBeUndefined();

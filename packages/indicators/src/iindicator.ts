@@ -1,7 +1,17 @@
+import { OHLC } from '@packages/common';
+
 export interface IIndicator {
-    name: string;
+	_name: string;
 
-    nextValue(value: number): void;
+	get name(): string;
 
-    getValues(): number[] | void;
+	init(values: OHLC[]): void;
+
+	nextValue(value: OHLC): void;
+
+	getValues(): number[];
+
+	getLastValue(): number | null;
+
+	getValue(index: number): number | null;
 }

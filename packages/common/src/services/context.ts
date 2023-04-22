@@ -40,6 +40,10 @@ export class Context {
 		return this.ohlc;
 	}
 
+	getLastOHLC(): OHLC {
+		return this.ohlc[this.ohlc.length - 1];
+	}
+
 	setOHLC(ohlc: OHLC | OHLC[]): void {
 		if (Array.isArray(ohlc)) {
 			this.ohlc = [...this.ohlc, ...ohlc];
