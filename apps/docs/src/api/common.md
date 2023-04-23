@@ -5,6 +5,13 @@
 
 La classe `Context` permet de transmettre différents informations dans le cadre de la stratégie de trading.
 
+### Récupérer le service de compte
+
+Pour récupérer le service de compte, il suffit d'utiliser la méthode `getAccountService` de la classe `Context`.
+
+```ts
+const accountService = context.getAccountService();
+```
 
 ### Accès au service de passage d'ordre
 

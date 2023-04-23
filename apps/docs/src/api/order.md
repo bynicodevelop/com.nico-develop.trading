@@ -10,9 +10,7 @@ Est accessible pas le biais de la méthode [getOrderService](./common.md#acces-a
 
 ## Achat au marché
 
-Permet de prendre un achat au prix marché. Retourne une promesse contenant les informations de l'ordre.
-
-> TODO: Ajouter lien vers la documentation de l'ordre
+Permet de prendre un achat au prix marché. Retourne une promesse contenant les informations de l'[ordre](./models.md#order).
 
 ```ts
 try {
@@ -31,9 +29,7 @@ try {
 
 ## Vente au marché
 
-Permet de prendre une vente au prix marché. Retourne une promesse contenant les informations de l'ordre.
-
-> TODO: Ajouter lien vers la documentation de l'ordre
+Permet de prendre une vente au prix marché. Retourne une promesse contenant les informations de l'[ordre](./models.md#order).
 
 ```ts
 try {
