@@ -20,7 +20,7 @@ export class OrderService {
 		);
 	}
 
-	async getOpenOrder(): Promise<Order[]> {
+	async getPositions(): Promise<Order[]> {
 		return this.connectorService.getPositions();
 	}
 
