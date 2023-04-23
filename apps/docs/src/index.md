@@ -1,7 +1,8 @@
 ---
 home: true
 # heroImage: https://v1.vuepress.vuejs.org/hero.png
-tagline: 
+heroText: Traderbook
+tagline: Framework de trading pour les traders codeurs
 actionText: Commencer →
 actionLink: /guide/
 # features:

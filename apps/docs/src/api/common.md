@@ -5,6 +5,25 @@
 
 La classe `Context` permet de transmettre différents informations dans le cadre de la stratégie de trading.
 
+Chaque méthode de la [stratégie](./strategy.md) possède une propriété `context` qui permet d'accéder à cette classe.
+
+### Accès au logger
+
+Pour accéder au logger, il suffit d'utiliser la méthode `getLogger` de la classe `Context`.
+
+```ts
+const logger = context.getLogger();
+```
+
+Puis vous pouvez utiliser les méthodes `info`, `warn`, `error` et `debug` pour écrire dans les logs.
+
+```ts
+logger.info('Hello world');
+```
+
+Cela va générer un dossier `logs` dans le répertoire de votre stratégie.
+
+
 ### Récupérer le service de compte
 
 Pour récupérer le service de compte, il suffit d'utiliser la méthode `getAccountService` de la classe `Context`.
