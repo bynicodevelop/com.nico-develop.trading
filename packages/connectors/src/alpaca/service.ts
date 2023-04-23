@@ -5,6 +5,7 @@ import {
 import {
 	IConnectorService,
 	Order,
+	OrderSide,
 	OrderType,
 } from '@packages/common';
 
@@ -82,5 +83,31 @@ export class AlpacaService implements IConnectorService {
 		}
 
 		return order;
+	}
+
+	async getPositions(): Promise<Order[]> {
+		let positions: any[] = [];
+
+		try {
+			positions = await this.client.getPositions();
+		} catch (error: any) {
+			console.log(error);
+		}
+
+		console.log(positions);
+
+		return positions.map(
+			(position: any): Order =>
+				({
+					id: position.asset_id,
+					symbol: {
+						name: position.symbol,
+						exchangeName: position.exchange,
+					},
+					quantity: position.qty,
+					side: position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
+					pl: position.unrealized_pl,
+				} as Order)
+		);
 	}
 }

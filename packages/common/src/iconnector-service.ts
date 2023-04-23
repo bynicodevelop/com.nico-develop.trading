@@ -21,4 +21,6 @@ export interface IConnectorService {
 	subscribeForBars(symbols: string[]): void;
 
 	createOrder(order: Order): Promise<Order | never>;
+
+	getPositions(): Promise<Order[]>;
 }

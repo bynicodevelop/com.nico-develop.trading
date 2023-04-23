@@ -7,6 +7,7 @@ export class Order implements IModel {
 	private _symbol: Symbol;
 	private _quantity: number;
 	private _side: OrderSide;
+	private _pl?: number;
 
 	get id(): string {
 		return this._id ?? '';
@@ -38,6 +39,14 @@ export class Order implements IModel {
 
 	set side(side: OrderSide) {
 		this._side = side;
+	}
+
+	get pl(): number {
+		return this._pl ?? 0;
+	}
+
+	set pl(pl: number) {
+		this._pl = pl;
 	}
 
 	constructor(symbol: Symbol, quantity: number, side: OrderSide) {

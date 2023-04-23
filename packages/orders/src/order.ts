@@ -14,9 +14,13 @@ export class OrderService {
 		);
 	}
 
-	sell(symbol: Symbol, quantity: number): Promise<Order | never> {
+	async sell(symbol: Symbol, quantity: number): Promise<Order | never> {
 		return this.connectorService.createOrder(
 			new Order(symbol, quantity, OrderSide.Sell)
 		);
+	}
+
+	async getOpenOrder(): Promise<Order[]> {
+		return this.connectorService.getPositions();
 	}
 }
