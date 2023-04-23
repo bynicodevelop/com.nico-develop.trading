@@ -6,9 +6,9 @@ import { AccountException } from '@packages/account/src/exception';
 import {
 	Account,
 	IConnectorService,
-	Order,
 	OrderSide,
 	OrderType,
+	Position,
 	Symbol,
 } from '@packages/common';
 
@@ -65,7 +65,7 @@ export class AlpacaService implements IConnectorService {
 		return this.client.getCryptoBars(symbols, options);
 	}
 
-	async createOrder(order: Order): Promise<Order | never> {
+	async createOrder(order: Position): Promise<Position | never> {
 		try {
 			const orderResult = await this.client.createOrder({
 				symbol: order.symbol.name,
@@ -88,7 +88,7 @@ export class AlpacaService implements IConnectorService {
 		return order;
 	}
 
-	async getPositions(): Promise<Order[]> {
+	async getPositions(): Promise<Position[]> {
 		let positions: any[] = [];
 
 		try {
@@ -98,7 +98,7 @@ export class AlpacaService implements IConnectorService {
 		}
 
 		return positions.map(
-			(position: any): Order =>
+			(position: any): Position =>
 				({
 					id: position.asset_id,
 					symbol: {
@@ -108,12 +108,12 @@ export class AlpacaService implements IConnectorService {
 					quantity: position.qty,
 					side: position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
 					pl: position.unrealized_pl,
-				} as Order)
+				} as Position)
 		);
 	}
 
-	async closePosition(symbol: Symbol): Promise<Order> {
-		const order: Order = {} as Order;
+	async closePosition(symbol: Symbol): Promise<Position> {
+		const order: Position = {} as Position;
 
 		try {
 			const position = await this.client.closePosition(symbol.name);

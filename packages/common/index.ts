@@ -4,7 +4,7 @@ export * from './src/iconnector-service';
 export * from './src/models/tick';
 export * from './src/models/symbol';
 export * from './src/models/ohlc';
-export * from './src/models/order';
+export * from './src/models/position';
 export * from './src/models/account';
 export * from './src/services/context';
 export * from './src/enums/connector-event';

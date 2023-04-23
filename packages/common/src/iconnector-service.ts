@@ -1,5 +1,5 @@
 import { Account } from './models/account';
-import { Order } from './models/order';
+import { Position } from './models/position';
 import { Symbol } from './models/symbol';
 
 export interface IConnectorService {
@@ -22,11 +22,11 @@ export interface IConnectorService {
 
 	subscribeForBars(symbols: string[]): void;
 
-	createOrder(order: Order): Promise<Order | never>;
+	createOrder(order: Position): Promise<Position | never>;
 
-	getPositions(): Promise<Order[]>;
+	getPositions(): Promise<Position[]>;
 
-	closePosition(symbol: Symbol): Promise<Order | never>;
+	closePosition(symbol: Symbol): Promise<Position | never>;
 
 	getAccount(): Promise<Account>;
 }

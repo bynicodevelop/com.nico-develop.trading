@@ -2,7 +2,7 @@ import { OrderSide } from '../enums/order';
 import { IModel } from './imodel';
 import { Symbol } from './symbol';
 
-export interface IOrder extends IModel {
+export interface IPosition extends IModel {
 	id: string;
 	symbol: Symbol;
 	quantity: number;
@@ -10,7 +10,7 @@ export interface IOrder extends IModel {
 	pl: number;
 }
 
-export class Order implements IOrder {
+export class Position implements IPosition {
 	private _id?: string;
 	private _symbol: Symbol;
 	private _quantity: number;

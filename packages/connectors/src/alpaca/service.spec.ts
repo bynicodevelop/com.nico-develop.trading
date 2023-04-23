@@ -3,9 +3,9 @@ import {
 	AlpacaCryptoClient,
 } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
 import {
-	Order,
 	OrderSide,
 	OrderType,
+	Position,
 	Symbol,
 } from '@packages/common';
 
@@ -136,7 +136,7 @@ describe('AlpacaService', () => {
 			quantity: 10,
 			side: OrderSide.Buy,
 			pl: 0,
-		} as Order;
+		} as Position;
 		const orderResult = { id: '123' };
 
 		beforeEach(() => {
@@ -164,7 +164,7 @@ describe('AlpacaService', () => {
 		});
 
 		it('should throw an OrderException if an error occurs', async () => {
-			const error = new Error('Order creation failed');
+			const error = new Error('Position creation failed');
 			jest.spyOn(mockClient, 'createOrder').mockRejectedValueOnce(error);
 			await expect(alpacaService.createOrder(order)).rejects.toThrow(
 				new OrderException(error.message, OrderException.ORDER_REJECTED_CODE)

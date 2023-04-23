@@ -1,7 +1,7 @@
 import {
 	IConnectorService,
-	Order,
 	OrderSide,
+	Position,
 	Symbol,
 } from '@packages/common';
 
@@ -28,7 +28,7 @@ describe('OrderService', (): void => {
 		it('should call createOrder on the ConnectorService with a buy order', async (): Promise<void> => {
 			await orderService.buy({} as Symbol, 1);
 			expect(mockConnectorService.createOrder).toHaveBeenCalledWith(
-				new Order({} as Symbol, 1, OrderSide.Buy)
+				new Position({} as Symbol, 1, OrderSide.Buy)
 			);
 		});
 	});
@@ -37,7 +37,7 @@ describe('OrderService', (): void => {
 		it('should call createOrder on the ConnectorService with a sell order', async (): Promise<void> => {
 			await orderService.sell({} as Symbol, 1);
 			expect(mockConnectorService.createOrder).toHaveBeenCalledWith(
-				new Order({} as Symbol, 1, OrderSide.Sell)
+				new Position({} as Symbol, 1, OrderSide.Sell)
 			);
 		});
 	});
