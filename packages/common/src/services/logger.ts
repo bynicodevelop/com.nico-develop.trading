@@ -16,4 +16,12 @@ const logger = winston.createLogger({
 	],
 });
 
-export default logger;
+export class LoggerService {
+	public log(message: string): void {
+		logger.log('info', message);
+	}
+
+	public error(message: string): void {
+		logger.log('error', message);
+	}
+}
