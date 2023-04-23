@@ -11,6 +11,12 @@ interface IOHLC {
 	timestamp: Date;
 }
 
+export enum CandleType {
+	Up = 'up',
+	Down = 'down',
+	Doji = 'doji',
+}
+
 export class OHLC implements IOHLC, IModel {
 	symbol: Symbol;
 	open: number;
@@ -36,6 +42,28 @@ export class OHLC implements IOHLC, IModel {
 		this.close = close;
 		this.volume = volume;
 		this.timestamp = timestamp;
+	}
+
+	candleType(): string {
+		if (this.open < this.close) {
+			return CandleType.Up;
+		} else if (this.open > this.close) {
+			return CandleType.Down;
+		} else {
+			return CandleType.Doji;
+		}
+	}
+
+	isCandleUp(): boolean {
+		return this.candleType() === CandleType.Up;
+	}
+
+	isCandleDown(): boolean {
+		return this.candleType() === CandleType.Down;
+	}
+
+	isCandleDoji(): boolean {
+		return this.candleType() === CandleType.Doji;
 	}
 
 	toJson(): Record<string, any> {
