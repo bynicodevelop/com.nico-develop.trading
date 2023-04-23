@@ -2,15 +2,13 @@
 
 Permet la transmission d'ordre sur un ou plusieurs instruments financiers.
 
-
-
 ## Classe `OrderService`
 
 Est accessible pas le biais de la méthode [getOrderService](./common.md#acces-au-service-de-passage-d-ordre) de la classe [Context](./common.md#context).
 
 ## Achat au marché
 
-Permet de prendre un achat au prix marché. Retourne une promesse contenant les informations de l'[ordre](./models.md#order).
+Permet de prendre un achat au prix marché. Retourne une promesse contenant les informations de la [position](./models.md#position).
 
 ```ts
 try {
@@ -29,7 +27,7 @@ try {
 
 ## Vente au marché
 
-Permet de prendre une vente au prix marché. Retourne une promesse contenant les informations de l'[ordre](./models.md#order).
+Permet de prendre une vente au prix marché. Retourne une promesse contenant les informations de la [position](./models.md#position).
 
 ```ts
 try {
@@ -76,7 +74,40 @@ Utiliser `await` / `async` peut rendre le code plus lisible, mais peut aussi ret
 ```ts
 try {
     const positions = await orderService.getPositions();
+
     console.log(positions);
+} catch (error) {
+    console.log(error);
+}
+```
+
+## Récupérer les ordres fermés
+
+Permet de récupérer les ordres fermés sur le compte de trading.
+
+Retourne un liste de [Order](./models.md#order).
+
+```ts
+orderService.getClosedPositions({
+    name: 'BTCUSD',
+    exchangeName: 'EXC',
+}).then((orders) => {
+    console.log(orders);
+}).catch((error) => {
+    console.log(error);
+});
+```
+
+Autre utilisation possible avec `await` / `async`.
+
+```ts
+try {
+    const orders = await orderService.getClosedPositions({
+        name: 'BTCUSD',
+        exchangeName: 'EXC',
+    });
+
+    console.log(orders);
 } catch (error) {
     console.log(error);
 }
