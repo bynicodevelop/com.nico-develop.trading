@@ -50,6 +50,19 @@ try {
 }
 ```
 
+## Cloture d'une position par symbole
+
+Permet de clôturer une position par symbole. Retourne une promesse contenant les informations de l'ordre.
+
+Prends en paramètre un modèle de type [Symbol](api/models.md#symbol).
+
+```ts
+const order = await orderService.closePosition({
+    name: 'BTCUSD',
+    exchangeName: 'EXC',
+} as Symbol);
+```
+
 ## Récupérer les positions
 
 Permet de récupérer les positions ouvertes sur le compte de trading.

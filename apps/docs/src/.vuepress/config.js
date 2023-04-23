@@ -68,6 +68,7 @@ module.exports = {
             'indicators',
             'order',
             'strategy',
+            'models',
           ]
         }
       ]
