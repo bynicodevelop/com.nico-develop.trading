@@ -51,7 +51,7 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 	}
 
 	private cryptoBarToOHLC(bar: CryptoBar): OHLC | null {
-		// if (!this.isCurrentSymbol(bar.Exchange)) return null;
+		if (!this.isCurrentSymbol(bar.Exchange)) return null;
 
 		return new OHLC(
 			{
