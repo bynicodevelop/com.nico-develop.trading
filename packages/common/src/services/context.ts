@@ -1,15 +1,16 @@
+import { Logger } from 'winston';
+
 import { AccountService } from '@packages/account';
-import {
-	IIndicator,
-	Indicator,
-} from '@packages/indicators';
+import { IIndicator, Indicator } from '@packages/indicators';
 import { OrderService } from '@packages/orders';
 
 import { OHLC } from '../models/ohlc';
 import { Symbol } from '../models/symbol';
 import { Tick } from '../models/tick';
+import logger from './logger';
 
 export class Context {
+	private logger: Logger;
 	private symbols: Symbol[] = [];
 	private ticks: Tick[] = [];
 	private ohlc: OHLC[] = [];
@@ -18,9 +19,15 @@ export class Context {
 		private orderService: OrderService,
 		private accountService: AccountService,
 		private indicator: Indicator
-	) {}
+	) {
+		this.logger = logger;
+	}
 
-	public getSymbols(): Symbol[] {
+	getLogger(): Logger {
+		return this.logger;
+	}
+
+	getSymbols(): Symbol[] {
 		return this.symbols;
 	}
 

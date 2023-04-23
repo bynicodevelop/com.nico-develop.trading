@@ -9,6 +9,7 @@
 	"dependencies": {
 		"@packages/account": "workspace:^",
 		"@packages/indicators": "workspace:^",
-		"@packages/orders": "workspace:^"
+		"@packages/orders": "workspace:^",
+		"winston": "^3.8.2"
 	}
 }

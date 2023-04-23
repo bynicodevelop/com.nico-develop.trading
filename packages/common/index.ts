@@ -8,6 +8,7 @@ export * from './src/models/position';
 export * from './src/models/order';
 export * from './src/models/account';
 export * from './src/services/context';
+export * from './src/services/logger';
 export * from './src/enums/connector-event';
 export * from './src/enums/exchanges-crypto';
 export * from './src/enums/order';
