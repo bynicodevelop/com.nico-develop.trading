@@ -2,7 +2,9 @@ import Alpaca from '@alpacahq/alpaca-trade-api';
 import {
 	AlpacaCryptoClient,
 } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
+import { AccountException } from '@packages/account/src/exception';
 import {
+	Account,
 	IConnectorService,
 	Order,
 	OrderSide,
@@ -129,5 +131,25 @@ export class AlpacaService implements IConnectorService {
 		}
 
 		return order;
+	}
+
+	async getAccount(): Promise<Account | never> {
+		try {
+			const result = await this.client.getAccount();
+
+			return {
+				id: result.id,
+				currency: result.currency,
+				cash: result.cash,
+				equity: result.equity,
+			} as Account;
+		} catch (error: any) {
+			console.log(error);
+
+			throw new AccountException(
+				error.message,
+				AccountException.ACCOUNT_NOT_FOUND_CODE
+			);
+		}
 	}
 }

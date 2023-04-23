@@ -1,3 +1,4 @@
+import { Account } from './models/account';
 import { Order } from './models/order';
 import { Symbol } from './models/symbol';
 
@@ -26,4 +27,6 @@ export interface IConnectorService {
 	getPositions(): Promise<Order[]>;
 
 	closePosition(symbol: Symbol): Promise<Order | never>;
+
+	getAccount(): Promise<Account>;
 }

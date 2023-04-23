@@ -1,6 +1,10 @@
-import { Indicator } from '../../../indicators';
-import { IIndicator } from '../../../indicators/src/iindicator';
-import { OrderService } from '../../../orders';
+import { AccountService } from '@packages/account';
+import {
+	IIndicator,
+	Indicator,
+} from '@packages/indicators';
+import { OrderService } from '@packages/orders';
+
 import { OHLC } from '../models/ohlc';
 import { Symbol } from '../models/symbol';
 import { Tick } from '../models/tick';
@@ -12,6 +16,7 @@ export class Context {
 
 	constructor(
 		private orderService: OrderService,
+		private accountService: AccountService,
 		private indicator: Indicator
 	) {}
 
@@ -68,5 +73,9 @@ export class Context {
 
 	getOrderService(): OrderService {
 		return this.orderService;
+	}
+
+	getAccountService(): AccountService {
+		return this.accountService;
 	}
 }

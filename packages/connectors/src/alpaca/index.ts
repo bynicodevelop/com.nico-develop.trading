@@ -4,6 +4,7 @@ import {
 	CryptoBar,
 	CryptoQuote,
 } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/entityv2';
+import { AccountService } from '@packages/account';
 import {
 	ConnectorEvent,
 	Context,
@@ -15,9 +16,8 @@ import {
 	Tick,
 } from '@packages/common';
 import { ExchangeCrypto } from '@packages/common/src/enums/exchanges-crypto';
-
-import { Indicator } from '../../../indicators';
-import { OrderService } from '../../../orders';
+import { Indicator } from '@packages/indicators';
+import { OrderService } from '@packages/orders';
 
 export * from './service';
 
@@ -28,9 +28,10 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 		super();
 
 		const orderService: OrderService = new OrderService(this.service);
+		const accountService: AccountService = new AccountService(this.service);
 		const indicator: Indicator = new Indicator();
 
-		this.context = new Context(orderService, indicator);
+		this.context = new Context(orderService, accountService, indicator);
 	}
 
 	private cryptoQuoteToTick(quote: CryptoQuote): Tick | null {

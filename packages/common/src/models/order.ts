@@ -2,7 +2,15 @@ import { OrderSide } from '../enums/order';
 import { IModel } from './imodel';
 import { Symbol } from './symbol';
 
-export class Order implements IModel {
+export interface IOrder extends IModel {
+	id: string;
+	symbol: Symbol;
+	quantity: number;
+	side: OrderSide;
+	pl: number;
+}
+
+export class Order implements IOrder {
 	private _id?: string;
 	private _symbol: Symbol;
 	private _quantity: number;
