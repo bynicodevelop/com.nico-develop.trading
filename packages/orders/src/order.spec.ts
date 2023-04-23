@@ -11,6 +11,7 @@ const mockConnectorService = {
 	createOrder: jest.fn(),
 	getPositions: jest.fn(),
 	closePosition: jest.fn(),
+	getClosedPositions: jest.fn(),
 } as unknown as IConnectorService;
 
 describe('OrderService', (): void => {
@@ -54,6 +55,18 @@ describe('OrderService', (): void => {
 			await orderService.closePosition({} as Symbol);
 			expect(mockConnectorService.closePosition).toHaveBeenCalledWith(
 				{} as Symbol
+			);
+		});
+	});
+
+	describe('getClosedPositions', (): void => {
+		it('should call getClosedPositions on the ConnectorService with the symbol', async (): Promise<void> => {
+			await orderService.getClosedPositions([{} as Symbol], 10, 'day', 100);
+			expect(mockConnectorService.getClosedPositions).toHaveBeenCalledWith(
+				[{} as Symbol],
+				10,
+				'day',
+				100
 			);
 		});
 	});

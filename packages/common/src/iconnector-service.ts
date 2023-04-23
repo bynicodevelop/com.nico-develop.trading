@@ -1,4 +1,5 @@
 import { Account } from './models/account';
+import { Order } from './models/order';
 import { Position } from './models/position';
 import { Symbol } from './models/symbol';
 
@@ -29,4 +30,11 @@ export interface IConnectorService {
 	closePosition(symbol: Symbol): Promise<Position | never>;
 
 	getAccount(): Promise<Account>;
+
+	getClosedPositions(
+		symbols: Symbol[],
+		period: number,
+		timeframe: 'day' | 'hour' | 'minute',
+		limit: number
+	): Promise<Order[]>;
 }

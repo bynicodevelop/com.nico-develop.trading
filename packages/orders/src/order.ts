@@ -1,5 +1,6 @@
 import {
 	IConnectorService,
+	Order,
 	OrderSide,
 	Position,
 	Symbol,
@@ -26,5 +27,19 @@ export class OrderService {
 
 	async closePosition(symbol: Symbol): Promise<Position | never> {
 		return this.connectorService.closePosition(symbol);
+	}
+
+	async getClosedPositions(
+		symbols: Symbol[],
+		period = 10,
+		timeframe: 'day' | 'hour' | 'minute' = 'day',
+		limit = 100
+	): Promise<Order[]> {
+		return this.connectorService.getClosedPositions(
+			symbols,
+			period,
+			timeframe,
+			limit
+		);
 	}
 }

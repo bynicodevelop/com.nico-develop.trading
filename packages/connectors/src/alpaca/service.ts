@@ -6,9 +6,11 @@ import { AccountException } from '@packages/account/src/exception';
 import {
 	Account,
 	IConnectorService,
+	Order,
 	OrderSide,
 	OrderType,
 	Position,
+	subtractTimeFromDate,
 	Symbol,
 } from '@packages/common';
 
@@ -151,5 +153,53 @@ export class AlpacaService implements IConnectorService {
 				AccountException.ACCOUNT_NOT_FOUND_CODE
 			);
 		}
+	}
+
+	async getClosedPositions(
+		symbols: Symbol[],
+		period: number,
+		timeframe: 'day' | 'hour' | 'minute',
+		limit: number
+	): Promise<Order[]> {
+		const date = new Date();
+		let order: any[] = [];
+
+		let dateAfter = subtractTimeFromDate(date, 0, 0, 0, period);
+
+		if (timeframe === 'hour') {
+			dateAfter = subtractTimeFromDate(date, 0, 0, period, 0);
+		}
+
+		if (timeframe === 'minute') {
+			dateAfter = subtractTimeFromDate(date, 0, period, 0, 0);
+		}
+
+		try {
+			order = await this.client.getOrders({
+				status: 'closed',
+				limit,
+				after: dateAfter,
+				until: date,
+				direction: 'asc',
+				symbols: symbols.map((symbol: Symbol): string => symbol.name),
+				nested: true,
+			});
+		} catch (error: any) {
+			console.log(error);
+		}
+
+		return order.map(
+			(position: any): Order =>
+				new Order(
+					position.id,
+					{
+						name: position.symbol,
+						exchangeName: position.exchange || 'alpaca',
+					} as Symbol,
+					position.qty,
+					position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
+					position.filled_avg_price
+				)
+		);
 	}
 }
