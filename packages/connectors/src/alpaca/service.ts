@@ -7,6 +7,7 @@ import {
 	Order,
 	OrderSide,
 	OrderType,
+	Symbol,
 } from '@packages/common';
 
 import { OrderException } from '../../../orders/src/exception';
@@ -94,8 +95,6 @@ export class AlpacaService implements IConnectorService {
 			console.log(error);
 		}
 
-		console.log(positions);
-
 		return positions.map(
 			(position: any): Order =>
 				({
@@ -109,5 +108,26 @@ export class AlpacaService implements IConnectorService {
 					pl: position.unrealized_pl,
 				} as Order)
 		);
+	}
+
+	async closePosition(symbol: Symbol): Promise<Order> {
+		const order: Order = {} as Order;
+
+		try {
+			const position = await this.client.closePosition(symbol.name);
+
+			order.id = position.asset_id;
+			order.symbol = {
+				name: position.symbol,
+				exchangeName: position.exchange,
+			};
+			order.quantity = position.qty;
+			order.side = position.side === 'long' ? OrderSide.Buy : OrderSide.Sell;
+			order.pl = position.unrealized_pl;
+		} catch (error: any) {
+			console.log(error);
+		}
+
+		return order;
 	}
 }

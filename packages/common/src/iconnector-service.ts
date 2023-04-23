@@ -1,4 +1,5 @@
 import { Order } from './models/order';
+import { Symbol } from './models/symbol';
 
 export interface IConnectorService {
 	getCryptoBars(
@@ -23,4 +24,6 @@ export interface IConnectorService {
 	createOrder(order: Order): Promise<Order | never>;
 
 	getPositions(): Promise<Order[]>;
+
+	closePosition(symbol: Symbol): Promise<Order | never>;
 }

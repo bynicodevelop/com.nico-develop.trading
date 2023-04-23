@@ -23,4 +23,8 @@ export class OrderService {
 	async getOpenOrder(): Promise<Order[]> {
 		return this.connectorService.getPositions();
 	}
+
+	async closePosition(symbol: Symbol): Promise<Order | never> {
+		return this.connectorService.closePosition(symbol);
+	}
 }
