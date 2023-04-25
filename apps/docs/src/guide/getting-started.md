@@ -67,3 +67,22 @@ KEY=******
 ## Clé secrète
 SECRET=******
 ```
+
+## Définition d'une stratégie
+
+Une stratégie est un fichier JavaScript. `StrategyBase` est une interface qui permet de définir les méthodes utilisées par le moteur de stratégie.
+
+```ts
+import { Context } from '@packages/common';
+import { StrategyBase } from '@packages/strategy';
+
+class Strategy implements StrategyBase {
+    init(context: Context) { ... }
+
+    run(context: Context) { ... }
+
+    onTick(context: Context) { ... }
+
+    onBar(context: Context) { ... }
+}
+```

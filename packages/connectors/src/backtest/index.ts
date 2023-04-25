@@ -24,7 +24,6 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 		options: {
 			start: Date;
 			end?: Date;
-			capital: number;
 		},
 		private interval = 1000
 	) {
