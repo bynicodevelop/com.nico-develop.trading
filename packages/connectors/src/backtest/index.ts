@@ -6,18 +6,32 @@ import {
 	Context,
 	ExchangeCrypto,
 	IConnector,
-	IConnectorService,
 	OHLC,
 	subtractTimeFromDate,
 } from '@packages/common';
+import { IConnectorBacktestService } from '@packages/common/src/iconnector-backtest-service';
 import { Indicator } from '@packages/indicators';
 import { OrderService } from '@packages/orders';
 
 export class BacktestConnector extends EventEmitter implements IConnector {
+	private _start: Date;
+	private _end: Date;
+
 	private context: Context;
 
-	constructor(private service: IConnectorService, private interval = 1000) {
+	constructor(
+		private service: IConnectorBacktestService,
+		options: {
+			start: Date;
+			end?: Date;
+			capital: number;
+		},
+		private interval = 1000
+	) {
 		super();
+
+		this._start = options.start;
+		this._end = options.end || subtractTimeFromDate(new Date(), 0, 1, 0, 0);
 
 		const orderService: OrderService = new OrderService(this.service);
 		const accountService: AccountService = new AccountService(this.service);
@@ -32,6 +46,46 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 
 	private getSymbolNameList(): string[] {
 		return this.context.getSymbols().map((symbol): string => symbol.name);
+	}
+
+	private async getHistoricalQuotes(
+		start: Date,
+		end = new Date()
+	): Promise<any[]> {
+		let done = false;
+		const listOfQuotes: any[] = [];
+
+		const stream = this.service.getCryptoQuotes(this.getSymbolNameList(), {
+			start: start.toISOString(),
+			end: end.toISOString(),
+		});
+
+		while (!done) {
+			const quote = await stream.next();
+
+			if (quote.done) {
+				done = true;
+			} else {
+				if (
+					!listOfQuotes.find(
+						(item): boolean => item.Timestamp === quote.value['Timestamp']
+					)
+				) {
+					listOfQuotes.push(quote.value);
+				} else {
+					const item = listOfQuotes.find(
+						(item): boolean => item.Timestamp === quote.value['Timestamp']
+					);
+
+					if (item) {
+						item.volume += quote.value['volume'];
+						item.close = quote.value['last'];
+					}
+				}
+			}
+		}
+
+		return listOfQuotes;
 	}
 
 	private async getHistoricalOHLC(
@@ -56,7 +110,7 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 			} else {
 				const ohlc = new OHLC(
 					{
-						name: bar.value['Symbol'],
+						name: bar.value['Symbol'][0],
 						exchangeName: bar.value['Exchange'] as ExchangeCrypto,
 					},
 					bar.value['Open'],
@@ -103,11 +157,9 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 
 		logger.log('Loading historical OHLC...');
 
-		const date = new Date();
-
 		const historicalOHLC = await this.getHistoricalOHLC(
-			subtractTimeFromDate(date, 0, 0, 0, 3),
-			subtractTimeFromDate(date, 0, 1, 0, 0),
+			this._start,
+			this._end,
 			'1Min'
 		);
 
@@ -115,6 +167,9 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 
 		const intervalId = setInterval(() => {
 			const ohlc = historicalOHLC.shift();
+
+			this.service.updatePrice(ohlc?.open || 0);
+			this.service.updateDate(ohlc?.timestamp || null);
 
 			if (ohlc) {
 				this.context.setOHLC(ohlc);

@@ -1,7 +1,7 @@
 export interface IAccount {
 	id: string;
 	currency: string;
-	cash: number;
+	balance: number;
 	equity: number;
 }
 

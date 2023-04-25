@@ -1,7 +1,5 @@
 import Alpaca from '@alpacahq/alpaca-trade-api';
-import {
-	AlpacaCryptoClient,
-} from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
+import { AlpacaCryptoClient } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
 import { AccountException } from '@packages/account/src/exception';
 import {
 	Account,
@@ -58,6 +56,13 @@ export class AlpacaService implements IConnectorService {
 
 	subscribeForBars(symbols: string[]): void {
 		this.stream.subscribeForBars(symbols);
+	}
+
+	getCryptoQuotes(
+		symbols: string[],
+		options: any
+	): AsyncGenerator<any, void, unknown> {
+		return this.client.getCryptoQuotes(symbols, options);
 	}
 
 	getCryptoBars(
@@ -142,7 +147,7 @@ export class AlpacaService implements IConnectorService {
 			return {
 				id: result.id,
 				currency: result.currency,
-				cash: result.cash,
+				balance: result.cash,
 				equity: result.equity,
 			} as Account;
 		} catch (error: any) {

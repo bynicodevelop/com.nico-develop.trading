@@ -76,10 +76,20 @@ export class Context {
 		return this.indicator.get(name);
 	}
 
+	/**
+	 * Get the order service
+	 *
+	 * @returns {OrderService}
+	 */
 	getOrderService(): OrderService {
 		return this.orderService;
 	}
 
+	/**
+	 * Get the account service
+	 *
+	 * @returns {AccountService}
+	 */
 	getAccountService(): AccountService {
 		return this.accountService;
 	}

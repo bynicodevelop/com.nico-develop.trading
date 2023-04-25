@@ -1,4 +1,5 @@
-import { OrderSide } from '../enums/order';
+import { OrderSide, OrderStatus } from '../enums/order';
+import { subtractTimeFromDate } from '../utils/datetime';
 import { IModel } from './imodel';
 import { Symbol } from './symbol';
 
@@ -7,7 +8,12 @@ export interface IPosition extends IModel {
 	symbol: Symbol;
 	quantity: number;
 	side: OrderSide;
+	status: 'open' | 'closed';
 	pl: number;
+	openPrice: number;
+	closePrice: number;
+	openDate: Date;
+	closeDate: Date | null;
 }
 
 export class Position implements IPosition {
@@ -15,7 +21,44 @@ export class Position implements IPosition {
 	private _symbol: Symbol;
 	private _quantity: number;
 	private _side: OrderSide;
+	private _status: OrderStatus;
 	private _pl?: number;
+	private _openPrice: number;
+	private _closePrice: number;
+	private _openDate: Date;
+	private _closeDate: Date | null;
+
+	public get openPrice(): number {
+		return this._openPrice;
+	}
+
+	public set openPrice(openPrice: number) {
+		this._openPrice = openPrice;
+	}
+
+	public get closePrice(): number {
+		return this._closePrice;
+	}
+
+	public set closePrice(closePrice: number) {
+		this._closePrice = closePrice;
+	}
+
+	public get openDate(): Date {
+		return this._openDate;
+	}
+
+	public set openDate(openDate: Date) {
+		this._openDate = openDate;
+	}
+
+	public get closeDate(): Date | null {
+		return this._closeDate;
+	}
+
+	public set closeDate(closeDate: Date | null) {
+		this._closeDate = closeDate;
+	}
 
 	get id(): string {
 		return this._id ?? '';
@@ -49,6 +92,14 @@ export class Position implements IPosition {
 		this._side = side;
 	}
 
+	get status(): OrderStatus {
+		return this._status;
+	}
+
+	set status(status: OrderStatus) {
+		this._status = status;
+	}
+
 	get pl(): number {
 		return this._pl ?? 0;
 	}
@@ -61,6 +112,14 @@ export class Position implements IPosition {
 		this._symbol = symbol;
 		this._quantity = quantity;
 		this._side = side;
+
+		this._openPrice = 0;
+		this._closePrice = 0;
+
+		this._openDate = subtractTimeFromDate(new Date(), 0, 0, 0, 0);
+		this._closeDate = null;
+
+		this._status = OrderStatus.Open;
 	}
 
 	toJson(): Record<string, unknown> {
