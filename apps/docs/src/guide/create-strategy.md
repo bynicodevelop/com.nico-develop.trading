@@ -46,6 +46,8 @@ const connector = new Connector(
 
 Il est possible de tester une stratégie en backtest. Pour cela, il faut utiliser le connecteur de backtest intégré à Traderbook.
 
+Ce connecteur utilise l'API d'Alpaca pour récupérer les données historiques.
+
 ```ts
 import { 
 	AlpacaBacktestService, 
