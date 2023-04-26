@@ -144,6 +144,22 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 		return listOfOHLC;
 	}
 
+	private playStrategy(historicalOHLC: OHLC[]): void {
+		const intervalId = setInterval((): void => {
+			const ohlc = historicalOHLC.shift();
+
+			this.service.updatePrice(ohlc?.open || 0);
+			this.service.updateDate(ohlc?.timestamp || null);
+
+			if (ohlc) {
+				this.context.setOHLC(ohlc);
+				this.emit(ConnectorEvent.OHLC, this.context);
+			} else {
+				clearInterval(intervalId);
+			}
+		}, this.interval);
+	}
+
 	async run(): Promise<void> {
 		const logger = this.context.getLogger();
 
@@ -164,19 +180,12 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 
 		logger.log('Historical OHLC loaded');
 
-		const intervalId = setInterval(() => {
-			const ohlc = historicalOHLC.shift();
+		if (historicalOHLC?.length === 0) {
+			logger.log('No historical OHLC found');
+			return;
+		}
 
-			this.service.updatePrice(ohlc?.open || 0);
-			this.service.updateDate(ohlc?.timestamp || null);
-
-			if (ohlc) {
-				this.context.setOHLC(ohlc);
-				this.emit(ConnectorEvent.OHLC, this.context);
-			} else {
-				clearInterval(intervalId);
-			}
-		}, this.interval);
+		this.playStrategy(historicalOHLC);
 
 		return Promise.resolve();
 	}
