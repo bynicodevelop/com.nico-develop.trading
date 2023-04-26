@@ -19,6 +19,13 @@ export class AlpacaBacktestService implements IConnectorBacktestService {
 
 	private client: Alpaca;
 
+	/**
+	 * Return P&L of Position
+	 * Retourne le P&L de la position
+	 *
+	 * @param order {@link Position}
+	 * @returns number
+	 */
 	private calculatePL(order: Position): number {
 		if (order.side === OrderSide.Buy) {
 			return order.quantity * (order.closePrice - order.openPrice);
