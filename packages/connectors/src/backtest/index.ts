@@ -116,7 +116,7 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 	 * @param quote
 	 * @returns
 	 */
-	private aggregateQuotes(quote: Tick): OHLC[] {
+	private aggregateQuotes(quote: Tick): OHLC | null {
 		if (
 			!this._listOfOHLC.find(
 				(item): boolean =>
@@ -124,17 +124,19 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 					roundToMinutes(quote.timestamp).getTime()
 			)
 		) {
-			this._listOfOHLC.push(
-				new OHLC(
-					quote.symbol,
-					quote.askPrice,
-					quote.askPrice,
-					quote.askPrice,
-					quote.askPrice,
-					quote.askSize + quote.bidSize,
-					quote.timestamp
-				)
+			const ohlc = new OHLC(
+				quote.symbol,
+				quote.askPrice,
+				quote.askPrice,
+				quote.askPrice,
+				quote.askPrice,
+				quote.askSize + quote.bidSize,
+				quote.timestamp
 			);
+
+			this._listOfOHLC.push(ohlc);
+
+			return ohlc;
 		} else {
 			const item = this._listOfOHLC.find(
 				(item): boolean =>
@@ -150,7 +152,7 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 			}
 		}
 
-		return this._listOfOHLC;
+		return null;
 	}
 
 	private async getHistoricalOHLC(
@@ -230,7 +232,7 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 			} else {
 				clearInterval(intervalId);
 			}
-		}, this.interval).unref();
+		}, this.interval);
 	}
 
 	private playTickStrategy(historicalTicks: Tick[]): void {
@@ -242,7 +244,12 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 				this.service.updateDate(quote?.timestamp || null);
 
 				if (quote) {
-					this.aggregateQuotes(quote);
+					const ohlc = this.aggregateQuotes(quote);
+
+					if (ohlc) {
+						this.context.setOHLC(ohlc);
+						this.emit(ConnectorEvent.OHLC, this.context);
+					}
 
 					this.context.setTick(quote);
 					this.emit(ConnectorEvent.Tick, this.context);
@@ -252,7 +259,7 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 			} else {
 				clearInterval(intervalId);
 			}
-		}, this.interval).unref();
+		}, this.interval);
 	}
 
 	async run(): Promise<void> {

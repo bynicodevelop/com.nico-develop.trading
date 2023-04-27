@@ -154,7 +154,7 @@ describe('BacktestConnector', (): void => {
 
 			const result = connector['aggregateQuotes'](quote);
 
-			expect(result).toHaveLength(1);
+			expect(result).toBe(connector['_listOfOHLC'][0]);
 		});
 
 		it('Doit ajouter un OHLC sur une liste non vide', (): void => {
@@ -193,7 +193,8 @@ describe('BacktestConnector', (): void => {
 
 			const result = connector['aggregateQuotes'](quote);
 
-			expect(result).toHaveLength(2);
+			expect(connector['_listOfOHLC']).toHaveLength(2);
+			expect(result).toBe(connector['_listOfOHLC'][1]);
 		});
 
 		it('Doit modifier un OHLC de la même date', (): void => {
@@ -218,12 +219,7 @@ describe('BacktestConnector', (): void => {
 
 			const result = connector['aggregateQuotes'](quote);
 
-			expect(result).toHaveLength(1);
-			expect(result[0].high).toBe(1);
-			expect(result[0].low).toBe(1);
-			expect(result[0].close).toBe(1);
-			expect(result[0].volume).toBe(3);
-			expect(result[0].timestamp).toBe(date);
+			expect(result).toBeNull();
 		});
 	});
 });
