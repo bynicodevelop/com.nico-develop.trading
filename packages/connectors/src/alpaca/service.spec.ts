@@ -4,6 +4,7 @@ import {
 } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
 import {
 	OrderSide,
+	OrderStatus,
 	OrderType,
 	Position,
 	Symbol,
@@ -199,6 +200,7 @@ describe('AlpacaService', () => {
 				quantity: mockPositions[0].qty,
 				side: OrderSide.Buy,
 				pl: mockPositions[0].unrealized_pl,
+				status: OrderStatus.Open,
 			};
 			expect(result[0]).toEqual(expectedOrder);
 		});

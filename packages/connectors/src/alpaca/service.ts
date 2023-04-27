@@ -1,11 +1,14 @@
 import Alpaca from '@alpacahq/alpaca-trade-api';
-import { AlpacaCryptoClient } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
+import {
+	AlpacaCryptoClient,
+} from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
 import { AccountException } from '@packages/account/src/exception';
 import {
 	Account,
 	IConnectorService,
 	Order,
 	OrderSide,
+	OrderStatus,
 	OrderType,
 	Position,
 	subtractTimeFromDate,
@@ -115,6 +118,7 @@ export class AlpacaService implements IConnectorService {
 					quantity: position.qty,
 					side: position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
 					pl: position.unrealized_pl,
+					status: OrderStatus.Open,
 				} as Position)
 		);
 	}
