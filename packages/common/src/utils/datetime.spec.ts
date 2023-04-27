@@ -1,4 +1,4 @@
-import { subtractTimeFromDate } from './datetime';
+import { roundToMinutes, subtractTimeFromDate } from './datetime';
 
 describe('subtractTimeFromDate', () => {
 	it('should subtract seconds from a date', () => {
@@ -29,5 +29,13 @@ describe('subtractTimeFromDate', () => {
 		const date = new Date(2023, 3, 20, 10, 30, 15, 500);
 		const subtractedDate = subtractTimeFromDate(date, 15);
 		expect(subtractedDate).toEqual(new Date(2023, 3, 20, 10, 30, 0, 0));
+	});
+});
+
+describe('roundToMinutes', () => {
+	it('should round seconds and milliseconds to 0', () => {
+		const date = new Date(2023, 3, 20, 10, 30, 15, 500);
+		const roundedDate = roundToMinutes(date);
+		expect(roundedDate).toEqual(new Date(2023, 3, 20, 10, 30, 0, 0));
 	});
 });
