@@ -59,3 +59,50 @@ export class Order implements IOrder { ... }
 * `quantity` : Quantité de l'ordre.
 * `side` : Sens de l'ordre.
 * `price` : Prix de l'ordre.
+
+## OHLC
+
+Modèle de données représentant un OHLC (chandelier).
+
+```ts
+interface IOHLC {
+	symbol: Symbol;
+	open: number;
+	high: number;
+	low: number;
+	close: number;
+	volume: number;
+	timestamp: Date;
+}
+
+export enum CandleType {
+	Up = 'up',
+	Down = 'down',
+	Doji = 'doji',
+}
+
+export class OHLC implements IOHLC, IModel {
+	// Implement IOHLC and IModel
+
+	candleType(): string {
+		if (this.open < this.close) {
+			return CandleType.Up;
+		} else if (this.open > this.close) {
+			return CandleType.Down;
+		} else {
+			return CandleType.Doji;
+		}
+	}
+
+	isCandleUp(): boolean {
+		return this.candleType() === CandleType.Up;
+	}
+
+	isCandleDown(): boolean {
+		return this.candleType() === CandleType.Down;
+	}
+
+	isCandleDoji(): boolean {
+		return this.candleType() === CandleType.Doji;
+	}
+}

@@ -8,6 +8,7 @@ import { AccountService } from '@packages/account';
 import {
 	ConnectorEvent,
 	Context,
+	getSymbolNameList,
 	IConnector,
 	IConnectorService,
 	OHLC,
@@ -67,10 +68,6 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 		);
 	}
 
-	private getSymbolNameList(): string[] {
-		return this.context.getSymbols().map((symbol): string => symbol.name);
-	}
-
 	private async getHistoricalOHLC(
 		start: Date,
 		end = new Date(),
@@ -79,11 +76,14 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 		let done = false;
 		const listOfOHLC: OHLC[] = [];
 
-		const stream = this.service.getCryptoBars(this.getSymbolNameList(), {
-			timeframe,
-			start: start.toISOString(),
-			end: end.toISOString(),
-		});
+		const stream = this.service.getCryptoBars(
+			getSymbolNameList(this.context.getSymbols()),
+			{
+				timeframe,
+				start: start.toISOString(),
+				end: end.toISOString(),
+			}
+		);
 
 		while (!done) {
 			const bar = await stream.next();
@@ -164,9 +164,11 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 
 		this.emit(ConnectorEvent.HistoricalOHLC, this.context);
 
-		this.service.subscribeForQuotes(this.getSymbolNameList());
+		this.service.subscribeForQuotes(
+			getSymbolNameList(this.context.getSymbols())
+		);
 
-		this.service.subscribeForBars(this.getSymbolNameList());
+		this.service.subscribeForBars(getSymbolNameList(this.context.getSymbols()));
 
 		this.service.onError((error): void => {
 			console.error('AlpacaConnector: error', error);

@@ -10,3 +10,9 @@ export enum OrderType {
 	// StopLimit = 'stop_limit',
 	// TrailingStop = 'trailing_stop',
 }
+
+export enum OrderStatus {
+	Open = 'open',
+	Closed = 'closed',
+	// Pending = 'pending',
+}

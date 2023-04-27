@@ -8,6 +8,7 @@ import {
 	IConnectorService,
 	Order,
 	OrderSide,
+	OrderStatus,
 	OrderType,
 	Position,
 	subtractTimeFromDate,
@@ -60,6 +61,13 @@ export class AlpacaService implements IConnectorService {
 		this.stream.subscribeForBars(symbols);
 	}
 
+	getCryptoQuotes(
+		symbols: string[],
+		options: any
+	): AsyncGenerator<any, void, unknown> {
+		return this.client.getCryptoQuotes(symbols, options);
+	}
+
 	getCryptoBars(
 		symbols: string[],
 		options: any
@@ -110,6 +118,7 @@ export class AlpacaService implements IConnectorService {
 					quantity: position.qty,
 					side: position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
 					pl: position.unrealized_pl,
+					status: OrderStatus.Open,
 				} as Position)
 		);
 	}
@@ -142,7 +151,7 @@ export class AlpacaService implements IConnectorService {
 			return {
 				id: result.id,
 				currency: result.currency,
-				cash: result.cash,
+				balance: result.cash,
 				equity: result.equity,
 			} as Account;
 		} catch (error: any) {

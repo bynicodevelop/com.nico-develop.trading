@@ -13,4 +13,5 @@ export * from './src/enums/connector-event';
 export * from './src/enums/exchanges-crypto';
 export * from './src/enums/order';
 export * from './src/utils/datetime';
+export * from './src/utils/symbol';
 export * from './src/exception';

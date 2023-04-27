@@ -1,7 +1,4 @@
-import {
-	Account,
-	IConnectorService,
-} from '@packages/common';
+import { Account, IConnectorService } from '@packages/common';
 
 import { AccountService } from './account';
 
@@ -21,7 +18,7 @@ describe('AccountService', () => {
 		it('should return an Account object', async () => {
 			const expectedAccount: Account = {
 				id: 'my-account-id',
-				cash: 1000,
+				balance: 1000,
 			} as Account;
 
 			connectorServiceMock.getAccount.mockResolvedValueOnce(expectedAccount);

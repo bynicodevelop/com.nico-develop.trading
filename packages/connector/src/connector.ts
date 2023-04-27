@@ -1,11 +1,6 @@
-import {
-	ConnectorEvent,
-	Context,
-	IConnector,
-} from '@packages/common';
+import { ConnectorEvent, Context, IConnector } from '@packages/common';
+import { IIndicator } from '@packages/indicators';
 import { StrategyBase } from '@packages/strategy';
-
-import { IIndicator } from '../../indicators/src/iindicator';
 
 export class Connector implements Partial<IConnector> {
 	constructor(private strategy: StrategyBase, private connector: IConnector) {}

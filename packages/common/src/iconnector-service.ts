@@ -4,6 +4,11 @@ import { Position } from './models/position';
 import { Symbol } from './models/symbol';
 
 export interface IConnectorService {
+	getCryptoQuotes(
+		symbols: string[],
+		options: any
+	): AsyncGenerator<any, void, unknown>;
+
 	getCryptoBars(
 		symbols: string[],
 		options: any

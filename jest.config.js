@@ -4,6 +4,6 @@ module.exports = {
     moduleFileExtensions: ['js', 'ts'],
     testMatch: ['**/*.spec.(js|ts)'],
     coverageDirectory: 'coverage',
-    collectCoverageFrom: ['src/**/*.ts'],
+    collectCoverageFrom: ['packages/**/*.ts'],
   };
   

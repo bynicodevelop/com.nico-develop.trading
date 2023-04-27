@@ -14,3 +14,11 @@ export const subtractTimeFromDate = (
 
 	return subtractedDate;
 };
+
+export const roundToMinutes = (date: Date): Date => {
+	const roundedDate = new Date(date.getTime());
+	roundedDate.setSeconds(0);
+	roundedDate.setMilliseconds(0);
+
+	return roundedDate;
+};

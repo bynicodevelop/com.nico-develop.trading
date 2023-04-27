@@ -1,32 +1,18 @@
 # Création d'une stratégie
 
-La création d'une stratégie se fait en 2 étapes :
+La première étape est de créer un dossier de stratégie comment expliqué dans le [Démarrage rapide](./getting-started.md).
 
-- Définition d'une stratégie
-- Démarrage d'une stratégie
+Une fois la structure de la stratégie créée, il mettre en place un connecteur pour démarrer la stratégie.
 
-## Définition d'une stratégie
-
-Une stratégie est un fichier JavaScript. La class `StrategyBase` est une interface qui permet de définir les méthodes utilisées par le moteur de stratégie.
-
-```ts
-import { Context } from '@packages/common';
-import { StrategyBase } from '@packages/strategy';
-
-class Strategy implements StrategyBase {
-    init(context: Context) { ... }
-
-    run(context: Context) { ... }
-
-    onTick(context: Context) { ... }
-
-    onBar(context: Context) { ... }
-}
-```
-
-## Demarrage d'une stratégie
+## Mise en place d'un connecteur
 
 Une stratégie est démarrée par un connecteur. Un connecteur une factory qui permet de lier une stratégie à une API de trading.
+
+> :information_source: Une API sous entend un service de trading. Par exemple, Alpaca est un service de trading qui propose une API.
+
+## Connecteur Alpaca
+
+La libraire [Traderbook](/) propose un connecteur pour Alpaca. Il est possible de créer son propre connecteur pour une autre API.
 
 ```ts
 import {
@@ -39,7 +25,7 @@ import {
 	Connector,
 } from '@packages/connector';
 
-// Stratégie créée précédemment
+// ... Votre stratégie de trading
 
 const connector = new Connector(
 	new Strategy(),
@@ -52,6 +38,49 @@ const connector = new Connector(
 );
 
 (async (): Promise<void> => {
+	await connector.run();
+})();
+```
+
+## Connecteur de backtest
+
+Il est possible de tester une stratégie en backtest. Pour cela, il faut utiliser le connecteur de backtest intégré à Traderbook.
+
+Ce connecteur utilise l'API d'Alpaca pour récupérer les données historiques.
+
+```ts
+import { 
+	AlpacaBacktestService, 
+	BacktestConnector 
+} from '@packages/connectors';
+
+import {
+	Config,
+	Connector,
+} from '@packages/connector';
+
+// ... Votre stratégie de trading
+
+const connector = new Connector(
+	new Strategy(),
+	new BacktestConnector(
+		new AlpacaBacktestService({ 
+			KEY: Config.KEY, 
+			SECRET: Config.SECRET 
+		}, 
+		1000 // Capital de départ
+		),
+		{
+			start: subtractTimeFromDate(new Date(), 0, 0, 0, 3),
+			end: new Date(), // optional
+		},
+		300 // Interval entre les évènements en millisecondes
+	)
+);
+
+(async (): Promise<void> => {
+	console.log('Starting strategy...');
+
 	await connector.run();
 })();
 ```
