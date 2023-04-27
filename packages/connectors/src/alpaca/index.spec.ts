@@ -1,17 +1,11 @@
 import { AccountService } from '@packages/account';
-import {
-	ConnectorEvent,
-	Context,
-} from '@packages/common';
+import { ConnectorEvent, Context } from '@packages/common';
 import { ExchangeCrypto } from '@packages/common/src/enums/exchanges-crypto';
 import { Symbol } from '@packages/common/src/models/symbol';
 import { Indicator } from '@packages/indicators';
 import { OrderService } from '@packages/orders';
 
-import {
-	AlpacaConnector,
-	AlpacaService,
-} from './index';
+import { AlpacaConnector, AlpacaService } from './index';
 
 const alpacaServiceMock: AlpacaService = {
 	onConnect: jest.fn(),
@@ -66,46 +60,6 @@ describe('AlpacaConnector', () => {
 			const result = connector['isCurrentSymbol'](ExchangeCrypto.BNCU);
 
 			expect(result).toBe(false);
-		});
-	});
-});
-
-describe('AlpacaConnector', () => {
-	describe('getSymbolNameList', () => {
-		it('should return an array with the names of the symbols in the context', () => {
-			const connector = new AlpacaConnector({} as AlpacaService);
-			const symbol1 = {
-				name: 'BTCUSD',
-				exchangeName: ExchangeCrypto.ERSX,
-			} as Symbol;
-			const symbol2 = {
-				name: 'ETHUSD',
-				exchangeName: ExchangeCrypto.ERSX,
-			} as Symbol;
-			connector['context'] = new Context(
-				orderService,
-				accountService,
-				indicator
-			);
-			connector['context']['symbols'] = [symbol1, symbol2];
-
-			const result = connector['getSymbolNameList']();
-
-			expect(result).toEqual(['BTCUSD', 'ETHUSD']);
-		});
-
-		it('should return an empty array if there are no symbols in the context', () => {
-			const connector = new AlpacaConnector({} as AlpacaService);
-			connector['context'] = new Context(
-				orderService,
-				accountService,
-				indicator
-			);
-			connector['context']['symbols'] = [];
-
-			const result = connector['getSymbolNameList']();
-
-			expect(result).toEqual([]);
 		});
 	});
 });

@@ -5,6 +5,7 @@ import {
 	ExchangeCrypto,
 	OHLC,
 	Symbol,
+	Tick,
 } from '@packages/common';
 import { IConnectorBacktestService } from '@packages/common/src/iconnector-backtest-service';
 import { Indicator } from '@packages/indicators';
@@ -29,9 +30,9 @@ const orderService = {} as unknown as OrderService;
 const accountService = {} as unknown as AccountService;
 const indicator = {} as unknown as Indicator;
 
-describe('BacktestConnector', () => {
-	describe('run', () => {
-		beforeEach(() => {
+describe('BacktestConnector', (): void => {
+	describe('run', (): void => {
+		beforeEach((): void => {
 			jest.clearAllMocks();
 
 			alpacaServiceMock.onConnect = jest.fn((callback: () => void): void => {
@@ -81,6 +82,30 @@ describe('BacktestConnector', () => {
 			expect(alpacaServiceMock.updateDate).toHaveBeenCalledTimes(0);
 		});
 
+		it('Doit appeler la méthode getHistoricalQuotes', async (): Promise<void> => {
+			const connector = new BacktestConnector(alpacaServiceMock, {
+				start: new Date(),
+				type: 'quotes',
+			});
+			const context = new Context(orderService, accountService, indicator);
+
+			context['symbols'] = [
+				{
+					name: 'BTCUSD',
+					exchangeName: ExchangeCrypto.ERSX,
+				},
+			];
+
+			connector['context'] = context;
+			connector['getHistoricalQuotes'] = jest.fn();
+
+			await connector.run();
+
+			expect(connector['getHistoricalQuotes']).toHaveBeenCalledTimes(1);
+			expect(alpacaServiceMock.updatePrice).toHaveBeenCalledTimes(0);
+			expect(alpacaServiceMock.updateDate).toHaveBeenCalledTimes(0);
+		});
+
 		it('Doit appeler la méthode updatePrice et updateDate', async (): Promise<void> => {
 			const connector = new BacktestConnector(alpacaServiceMock, {
 				start: new Date(),
@@ -106,6 +131,99 @@ describe('BacktestConnector', () => {
 			expect(connector['getHistoricalOHLC']).toHaveBeenCalledTimes(1);
 			expect(connector['playStrategy']).toHaveBeenCalledTimes(1);
 			expect(connector['playStrategy']).toHaveBeenCalledWith(data);
+		});
+	});
+
+	describe('aggregateQuotes', (): void => {
+		it('Doit ajouter un OHLC sur une liste vide', (): void => {
+			const connector = new BacktestConnector(alpacaServiceMock, {
+				start: new Date(),
+			});
+			const context = new Context(orderService, accountService, indicator);
+
+			context['symbols'] = [
+				{
+					name: 'BTCUSD',
+					exchangeName: ExchangeCrypto.ERSX,
+				},
+			];
+
+			connector['context'] = context;
+
+			const quote = new Tick({} as Symbol, 1, 1, 1, 1, new Date());
+
+			const result = connector['aggregateQuotes'](quote);
+
+			expect(result).toHaveLength(1);
+		});
+
+		it('Doit ajouter un OHLC sur une liste non vide', (): void => {
+			const connector = new BacktestConnector(alpacaServiceMock, {
+				start: new Date(),
+			});
+			const context = new Context(orderService, accountService, indicator);
+
+			context['symbols'] = [
+				{
+					name: 'BTCUSD',
+					exchangeName: ExchangeCrypto.ERSX,
+				},
+			];
+
+			connector['context'] = context;
+			connector['_listOfOHLC'] = [
+				new OHLC(
+					{} as Symbol,
+					1,
+					1,
+					1,
+					1,
+					1,
+					new Date(
+						new Date().getFullYear(),
+						new Date().getMonth(),
+						new Date().getDate(),
+						new Date().getHours(),
+						new Date().getMinutes() - 1
+					)
+				),
+			];
+
+			const quote = new Tick({} as Symbol, 1, 1, 1, 1, new Date());
+
+			const result = connector['aggregateQuotes'](quote);
+
+			expect(result).toHaveLength(2);
+		});
+
+		it('Doit modifier un OHLC de la même date', (): void => {
+			const connector = new BacktestConnector(alpacaServiceMock, {
+				start: new Date(),
+			});
+			const context = new Context(orderService, accountService, indicator);
+
+			context['symbols'] = [
+				{
+					name: 'BTCUSD',
+					exchangeName: ExchangeCrypto.ERSX,
+				},
+			];
+
+			const date = new Date();
+
+			connector['context'] = context;
+			connector['_listOfOHLC'] = [new OHLC({} as Symbol, 1, 1, 1, 1, 1, date)];
+
+			const quote = new Tick({} as Symbol, 1, 1, 1, 1, date);
+
+			const result = connector['aggregateQuotes'](quote);
+
+			expect(result).toHaveLength(1);
+			expect(result[0].high).toBe(1);
+			expect(result[0].low).toBe(1);
+			expect(result[0].close).toBe(1);
+			expect(result[0].volume).toBe(3);
+			expect(result[0].timestamp).toBe(date);
 		});
 	});
 });
