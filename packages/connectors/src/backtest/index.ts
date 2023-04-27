@@ -51,6 +51,9 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 		logger.log('Initializing backtest connector...');
 	}
 
+	private sleep = (ms: number) =>
+		new Promise((resolve) => setTimeout(resolve, ms));
+
 	private async getHistoricalQuotes(
 		start: Date,
 		end = new Date()
@@ -59,7 +62,6 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 		const listOfQuotes: Tick[] = [];
 
 		const logger = this.context.getLogger();
-
 		logger.log('Starting backtest...');
 
 		const stream = this.service.getCryptoQuotes(
@@ -76,52 +78,35 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 			if (quote.done) {
 				done = true;
 			} else {
-				if (
-					!listOfQuotes.find(
-						(item): boolean =>
-							item.timestamp === new Date(quote.value['Timestamp'])
-					)
-				) {
-					const tick = new Tick(
-						{
-							name: quote.value['Symbol'][0],
-							exchangeName: quote.value['Exchange'],
-						} as Symbol,
-						quote.value['AskPrice'],
-						quote.value['AskSize'],
-						quote.value['BidPrice'],
-						quote.value['BidSize'],
-						new Date(quote.value['Timestamp'])
-					);
+				const tick = new Tick(
+					{
+						name: quote.value['Symbol'][0],
+						exchangeName: quote.value['Exchange'],
+					} as Symbol,
+					quote.value['AskPrice'],
+					quote.value['AskSize'],
+					quote.value['BidPrice'],
+					quote.value['BidSize'],
+					new Date(quote.value['Timestamp'])
+				);
 
-					listOfQuotes.push(tick);
+				listOfQuotes.push(tick);
 
-					this.service.updatePrice(tick.askPrice || 0);
-					this.service.updateDate(tick.timestamp || null);
+				this.service.updatePrice(tick.askPrice || 0);
+				this.service.updateDate(tick.timestamp || null);
 
-					const ohlc = this.aggregateQuotes(tick);
+				const ohlc = this.aggregateQuotes(tick);
 
-					if (ohlc) {
-						this.context.setOHLC(ohlc);
-						this.emit(ConnectorEvent.OHLC, this.context);
-					}
-
-					this.context.setTick(tick);
-					this.emit(ConnectorEvent.Tick, this.context);
-				} else {
-					const item = listOfQuotes.find(
-						(item): boolean =>
-							item.timestamp === new Date(quote.value['Timestamp'])
-					);
-
-					if (item) {
-						item.askPrice = quote.value['AskPrice'];
-						item.askSize = quote.value['AskSize'];
-						item.bidPrice = quote.value['BidPrice'];
-						item.bidSize = quote.value['BidSize'];
-					}
+				if (ohlc) {
+					this.context.setOHLC(ohlc);
+					this.emit(ConnectorEvent.OHLC, this.context);
 				}
+
+				this.context.setTick(tick);
+				this.emit(ConnectorEvent.Tick, this.context);
 			}
+
+			await this.sleep(this.interval);
 		}
 
 		logger.log('Backtest completed.');
@@ -136,11 +121,13 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 	 * @returns
 	 */
 	private aggregateQuotes(quote: Tick): OHLC | null {
+		const lastOHLC = this._listOfOHLC[this._listOfOHLC.length - 1];
+
 		if (
-			!this._listOfOHLC.find(
-				(item): boolean =>
-					roundToMinutes(item.timestamp).getTime() ===
-					roundToMinutes(quote.timestamp).getTime()
+			!lastOHLC ||
+			!(
+				roundToMinutes(quote.timestamp).getTime() ===
+				roundToMinutes(lastOHLC.timestamp).getTime()
 			)
 		) {
 			const ohlc = new OHLC(
@@ -157,17 +144,11 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 
 			return ohlc;
 		} else {
-			const item = this._listOfOHLC.find(
-				(item): boolean =>
-					roundToMinutes(item.timestamp).getTime() ===
-					roundToMinutes(quote.timestamp).getTime()
-			);
-
-			if (item) {
-				item.high = Math.max(item.high, quote.askPrice);
-				item.low = Math.min(item.low, quote.askPrice);
-				item.close = quote.askPrice;
-				item.volume += quote.askSize + quote.bidSize;
+			if (lastOHLC) {
+				lastOHLC.high = Math.max(lastOHLC.high, quote.askPrice);
+				lastOHLC.low = Math.min(lastOHLC.low, quote.askPrice);
+				lastOHLC.close = quote.askPrice;
+				lastOHLC.volume += quote.askSize + quote.bidSize;
 			}
 		}
 
@@ -181,6 +162,9 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 	): Promise<OHLC[]> {
 		let done = false;
 		const listOfOHLC: OHLC[] = [];
+
+		const logger = this.context.getLogger();
+		logger.log('Starting backtest...');
 
 		const stream = this.service.getCryptoBars(
 			getSymbolNameList(this.context.getSymbols()),
@@ -216,7 +200,18 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 							item.timestamp.getTime() === ohlc.timestamp.getTime()
 					)
 				) {
+					if (listOfOHLC.length > 0) {
+						const lastOHLC = listOfOHLC[listOfOHLC.length - 1];
+
+						this.context.setOHLC(lastOHLC);
+
+						this.emit(ConnectorEvent.OHLC, this.context);
+					}
+
 					listOfOHLC.push(ohlc);
+
+					this.service.updatePrice(ohlc.open || 0);
+					this.service.updateDate(ohlc.timestamp || null);
 				} else {
 					const item = listOfOHLC.find(
 						(item): boolean =>
@@ -226,32 +221,17 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 					if (item) {
 						item.volume += ohlc.volume;
 						item.close = ohlc.close;
+
+						this.service.updatePrice(ohlc.close || 0);
+						this.service.updateDate(ohlc.timestamp || null);
 					}
 				}
 			}
 		}
 
+		logger.log('Backtest completed.');
+
 		return listOfOHLC;
-	}
-
-	private playStrategy(historicalOHLC: OHLC[]): void {
-		const intervalId = setInterval((): void => {
-			if (historicalOHLC && historicalOHLC.length > 0) {
-				const ohlc = historicalOHLC.shift();
-
-				this.service.updatePrice(ohlc?.open || 0);
-				this.service.updateDate(ohlc?.timestamp || null);
-
-				if (ohlc) {
-					this.context.setOHLC(ohlc);
-					this.emit(ConnectorEvent.OHLC, this.context);
-				} else {
-					clearInterval(intervalId);
-				}
-			} else {
-				clearInterval(intervalId);
-			}
-		}, this.interval);
 	}
 
 	async run(): Promise<void> {
@@ -267,20 +247,7 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 		if (this._type === 'bars') {
 			logger.log('Loading historical OHLC...');
 
-			const historicalOHLC = await this.getHistoricalOHLC(
-				this._start,
-				this._end,
-				'1Min'
-			);
-
-			logger.log('Historical OHLC loaded');
-
-			if (historicalOHLC?.length === 0) {
-				logger.log('No historical OHLC found');
-				return;
-			}
-
-			this.playStrategy(historicalOHLC);
+			await this.getHistoricalOHLC(this._start, this._end, '1Min');
 		}
 
 		if (this._type === 'quotes') {

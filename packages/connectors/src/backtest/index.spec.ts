@@ -124,13 +124,10 @@ describe('BacktestConnector', (): void => {
 
 			connector['context'] = context;
 			connector['getHistoricalOHLC'] = jest.fn().mockReturnValueOnce(data);
-			connector['playStrategy'] = jest.fn();
 
 			await connector.run();
 
 			expect(connector['getHistoricalOHLC']).toHaveBeenCalledTimes(1);
-			expect(connector['playStrategy']).toHaveBeenCalledTimes(1);
-			expect(connector['playStrategy']).toHaveBeenCalledWith(data);
 		});
 	});
 
