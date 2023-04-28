@@ -1,17 +1,26 @@
 {
-    "tabWidth": 2,
-    "useTabs": true,
-    "printWidth": 80,
-    "trailingComma": "es5",
-    "semi": true,
-    "singleQuote": true,
-    "compilerOptions": {
-      "esModuleInterop": true,
-      "module": "commonjs",
-      "target": "es2015",
-      "outDir": "./dist",
-      "strict": true,
-      "sourceMap": true
-    }
-  }
-  
+	"tabWidth": 2,
+	"useTabs": true,
+	"printWidth": 80,
+	"trailingComma": "es5",
+	"semi": true,
+	"singleQuote": true,
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"module": "commonjs",
+		"target": "es2015",
+		"outDir": "./dist",
+		"strict": true,
+		"sourceMap": true,
+		"paths": {
+			"@packages/account": ["./packages/account/index.ts"],
+			"@packages/common": ["./packages/common/index.ts"],
+			"@packages/connector": ["./packages/connector/index.ts"],
+			"@packages/connectors": ["./packages/connectors/index.ts"],
+			"@packages/database": ["./packages/database/index.ts"],
+			"@packages/indicators": ["./packages/indicators/index.ts"],
+			"@packages/orders": ["./packages/orders/index.ts"],
+			"@packages/strategy": ["./packages/strategy/index.ts"]
+		}
+	}
+}
