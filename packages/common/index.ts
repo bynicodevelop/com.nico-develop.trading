@@ -1,6 +1,7 @@
 export * from './src/iconnector';
 export * from './src/icontext';
 export * from './src/iconnector-service';
+export * from './src/iconnector-backtest-service';
 export * from './src/models/tick';
 export * from './src/models/symbol';
 export * from './src/models/ohlc';

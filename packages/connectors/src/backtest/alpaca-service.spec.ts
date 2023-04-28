@@ -6,6 +6,7 @@ import {
 	Symbol,
 } from '@packages/common';
 
+import { Database } from '../database';
 import { ConnectorOption } from '../options';
 import { AlpacaBacktestService } from './alpaca-service';
 
@@ -586,18 +587,23 @@ describe('AlpacaBacktestService', () => {
 
 			alpacaService['price'] = 1000;
 			alpacaService['date'] = new Date();
+			alpacaService['database'] = {
+				createPosition: jest.fn(),
+			} as unknown as Database;
 
 			const order = await alpacaService.createOrder({
 				quantity: 10,
 				side: OrderSide.Buy,
 			} as Position);
 
-			expect(order.id).toEqual('0');
 			expect(order.openPrice).toEqual(1000);
 			expect(order.closePrice).toEqual(1000);
 			expect(order.openDate).toEqual(alpacaService['date']);
 			expect(order.closeDate).toEqual(alpacaService['date']);
-			expect(alpacaService['_orders'].length).toEqual(1);
+
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledTimes(
+				1
+			);
 		});
 
 		it('Doit créer un ordre à 500 euros', async () => {
@@ -608,21 +614,27 @@ describe('AlpacaBacktestService', () => {
 
 			alpacaService['price'] = 500;
 			alpacaService['date'] = new Date();
+			alpacaService['database'] = {
+				createPosition: jest.fn(),
+			} as unknown as Database;
 
 			const order = await alpacaService.createOrder({
 				quantity: 10,
 				side: OrderSide.Buy,
 			} as Position);
 
-			expect(order.id).toEqual('0');
 			expect(order.openPrice).toEqual(500);
 			expect(order.closePrice).toEqual(500);
 			expect(order.openDate).toEqual(alpacaService['date']);
 			expect(order.closeDate).toEqual(alpacaService['date']);
-			expect(alpacaService['_orders'].length).toEqual(1);
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledTimes(
+				1
+			);
 		});
 
 		it('Doit créer 2 ordres à 500 euros', async () => {
+			jest.spyOn(Math, 'random').mockImplementation(() => 0.5);
+
 			const alpacaService = new AlpacaBacktestService(
 				{} as ConnectorOption,
 				1000
@@ -630,6 +642,9 @@ describe('AlpacaBacktestService', () => {
 
 			alpacaService['price'] = 500;
 			alpacaService['date'] = new Date();
+			alpacaService['database'] = {
+				createPosition: jest.fn(),
+			} as unknown as Database;
 
 			const order1 = await alpacaService.createOrder({
 				quantity: 10,
@@ -640,17 +655,18 @@ describe('AlpacaBacktestService', () => {
 				side: OrderSide.Buy,
 			} as Position);
 
-			expect(order1.id).toEqual('0');
 			expect(order1.openPrice).toEqual(500);
 			expect(order1.closePrice).toEqual(500);
 			expect(order1.openDate).toEqual(alpacaService['date']);
 			expect(order1.closeDate).toEqual(alpacaService['date']);
-			expect(order2.id).toEqual('1');
 			expect(order2.openPrice).toEqual(500);
 			expect(order2.closePrice).toEqual(500);
 			expect(order2.openDate).toEqual(alpacaService['date']);
 			expect(order2.closeDate).toEqual(alpacaService['date']);
-			expect(alpacaService['_orders'].length).toEqual(2);
+
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledTimes(
+				2
+			);
 		});
 	});
 
@@ -661,7 +677,7 @@ describe('AlpacaBacktestService', () => {
 				1000
 			);
 
-			alpacaService['_orders'] = [
+			const data = [
 				{
 					quantity: 10,
 					side: OrderSide.Buy,
@@ -678,9 +694,13 @@ describe('AlpacaBacktestService', () => {
 				} as Position,
 			];
 
+			alpacaService['database'] = {
+				getPositions: jest.fn().mockResolvedValue(data) as any,
+			} as Database;
+
 			const positions = await alpacaService.getPositions();
 
-			expect(positions).toEqual(alpacaService['_orders']);
+			expect(positions).toEqual(data);
 		});
 	});
 
