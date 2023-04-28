@@ -2,7 +2,7 @@ import Alpaca from '@alpacahq/alpaca-trade-api';
 import {
 	AlpacaCryptoClient,
 } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
-import { AccountException } from '@packages/account/src/exception';
+import { AccountException } from '@packages/account';
 import {
 	Account,
 	IConnectorService,
@@ -16,13 +16,19 @@ import {
 } from '@packages/common';
 
 import { OrderException } from '../../../orders/src/exception';
+import { Database } from '../database';
 import { ConnectorOption } from '../options';
 
 export class AlpacaService implements IConnectorService {
+	private _option: ConnectorOption;
+
 	private client: Alpaca;
 	private stream: AlpacaCryptoClient;
+	private database?: Database;
 
 	constructor(option: ConnectorOption) {
+		this._option = option;
+
 		this.client = new Alpaca({
 			keyId: option.KEY,
 			secretKey: option.SECRET,
@@ -33,7 +39,13 @@ export class AlpacaService implements IConnectorService {
 		this.stream = this.client.crypto_stream_v2;
 	}
 
-	onConnect(callback: () => void): void {
+	async onConnect(callback: () => void): Promise<void> {
+		if (this._option.DATABASE_PATH) {
+			this.database = new Database(this._option.DATABASE_PATH);
+
+			await this.database.init();
+		}
+
 		this.stream.onConnect(callback);
 	}
 
@@ -86,6 +98,10 @@ export class AlpacaService implements IConnectorService {
 			});
 
 			order.id = orderResult.id;
+
+			if (this.database) {
+				return await this.database.createPosition(order);
+			}
 		} catch (error: any) {
 			console.log(error);
 
@@ -103,6 +119,19 @@ export class AlpacaService implements IConnectorService {
 
 		try {
 			positions = await this.client.getPositions();
+
+			if (this.database) {
+				const databasePositions = await this.database.getPositions();
+
+				positions = positions.map((position: any) => {
+					const databasePosition = databasePositions.find(
+						(databasePosition: any): boolean =>
+							databasePosition.id === position.asset_id
+					);
+
+					return { ...position, ...databasePosition };
+				});
+			}
 		} catch (error: any) {
 			console.log(error);
 		}
@@ -116,9 +145,11 @@ export class AlpacaService implements IConnectorService {
 						exchangeName: position.exchange,
 					},
 					quantity: position.qty,
-					side: position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
+					side: position.side,
 					pl: position.unrealized_pl,
 					status: OrderStatus.Open,
+					openDate: position.openDate,
+					openPrice: position.openPrice,
 				} as Position)
 		);
 	}
@@ -129,6 +160,8 @@ export class AlpacaService implements IConnectorService {
 		try {
 			const position = await this.client.closePosition(symbol.name);
 
+			console.log('Position closed', position);
+
 			order.id = position.asset_id;
 			order.symbol = {
 				name: position.symbol,
@@ -137,6 +170,16 @@ export class AlpacaService implements IConnectorService {
 			order.quantity = position.qty;
 			order.side = position.side === 'long' ? OrderSide.Buy : OrderSide.Sell;
 			order.pl = position.unrealized_pl;
+
+			order.closeDate = new Date();
+
+			if (this.database) {
+				const positionClosed = await this.database.closePosition(order);
+
+				order.openDate = positionClosed.openDate;
+				order.openPrice = positionClosed.openPrice;
+				order.status = positionClosed.status;
+			}
 		} catch (error: any) {
 			console.log(error);
 		}

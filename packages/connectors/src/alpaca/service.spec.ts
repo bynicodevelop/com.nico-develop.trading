@@ -11,6 +11,7 @@ import {
 } from '@packages/common';
 
 import { OrderException } from '../../../orders/src/exception';
+import { Database } from '../database';
 import { AlpacaService } from './service';
 
 jest.mock('@alpacahq/alpaca-trade-api', () => ({
@@ -61,6 +62,15 @@ describe('AlpacaService', () => {
 		alpacaService = new AlpacaService({ KEY: 'key', SECRET: 'secret' });
 		alpacaService['client'] = mockClient;
 		alpacaService['stream'] = mockStream;
+	});
+
+	describe('Doit être défini', () => {
+		it('Option est défini', () => {
+			expect(alpacaService).toBeDefined();
+			expect(alpacaService['_option']).toBeDefined();
+
+			expect(alpacaService['_option']['DATABASE_PATH']).toBeUndefined();
+		});
 	});
 
 	describe('onConnect', () => {
@@ -149,6 +159,10 @@ describe('AlpacaService', () => {
 		});
 
 		it('should call createOrder on the client object with the right arguments', async () => {
+			alpacaService['database'] = {
+				createPosition: jest.fn(),
+			} as unknown as Database;
+
 			await alpacaService.createOrder(order);
 			expect(mockClient.createOrder).toHaveBeenCalledWith({
 				symbol: order.symbol.name,
@@ -157,6 +171,13 @@ describe('AlpacaService', () => {
 				type: OrderType.Market,
 				time_in_force: 'gtc',
 			});
+
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledTimes(
+				1
+			);
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledWith(
+				order
+			);
 		});
 
 		it('should set the id of the order with the id returned by the Alpaca API', async () => {
@@ -185,9 +206,28 @@ describe('AlpacaService', () => {
 					exchange: 'NASDAQ',
 				},
 			];
+
+			const savedPositions = [
+				{
+					id: mockPositions[0].asset_id,
+					symbolName: mockPositions[0].symbol,
+					exchangeName: mockPositions[0].exchange,
+					quantity: mockPositions[0].qty,
+					side: OrderSide.Buy,
+					pl: mockPositions[0].unrealized_pl,
+					openPrice: 10,
+					openDate: new Date(),
+				},
+			];
+
 			mockClient.getPositions = jest.fn().mockResolvedValueOnce(mockPositions);
 
+			alpacaService['database'] = {
+				getPositions: jest.fn().mockResolvedValueOnce(savedPositions),
+			} as unknown as Database;
+
 			const result = await alpacaService.getPositions();
+
 			expect(mockClient.getPositions).toHaveBeenCalled();
 			expect(result.length).toBe(mockPositions.length);
 
@@ -201,7 +241,10 @@ describe('AlpacaService', () => {
 				side: OrderSide.Buy,
 				pl: mockPositions[0].unrealized_pl,
 				status: OrderStatus.Open,
+				openPrice: savedPositions[0].openPrice,
+				openDate: savedPositions[0].openDate,
 			};
+
 			expect(result[0]).toEqual(expectedOrder);
 		});
 
@@ -223,6 +266,62 @@ describe('AlpacaService', () => {
 			expect(mockClient.getPositions).toHaveBeenCalled();
 			expect(console.log).toHaveBeenCalledWith(mockError);
 			expect(result.length).toBe(0);
+		});
+	});
+
+	describe('closePosition', () => {
+		it('should call closePosition on the client object', async () => {
+			const mockPosition = {
+				asset_id: 'BTC',
+				symbol: 'BTC',
+				qty: 1,
+				side: 'long',
+				unrealized_pl: 10,
+				exchange: 'NASDAQ',
+			};
+
+			const date = new Date();
+
+			const savedPosition = {
+				id: mockPosition.asset_id,
+				symbolName: mockPosition.symbol,
+				exchangeName: mockPosition.exchange,
+				quantity: mockPosition.qty,
+				side: OrderSide.Buy,
+				status: OrderStatus.Closed,
+				pl: mockPosition.unrealized_pl,
+				openPrice: 10,
+				openDate: date,
+				closeDate: date,
+			};
+
+			mockClient.closePosition = jest.fn().mockResolvedValueOnce(mockPosition);
+
+			alpacaService['database'] = {
+				closePosition: jest.fn().mockResolvedValueOnce(savedPosition),
+			} as unknown as Database;
+
+			const result = await alpacaService.closePosition({
+				name: mockPosition.symbol,
+				exchangeName: mockPosition.exchange,
+			} as unknown as Symbol);
+
+			expect(mockClient.closePosition).toHaveBeenCalled();
+			expect(result).toMatchObject({
+				id: mockPosition.asset_id,
+				symbol: {
+					name: mockPosition.symbol,
+					exchangeName: mockPosition.exchange,
+				},
+				quantity: mockPosition.qty,
+				side: OrderSide.Buy,
+				pl: mockPosition.unrealized_pl,
+				status: OrderStatus.Closed,
+				openPrice: savedPosition.openPrice,
+				openDate: savedPosition.openDate,
+			});
+
+			expect(result.closeDate).toBeDefined();
 		});
 	});
 });

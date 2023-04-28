@@ -7,13 +7,13 @@ import {
 	ExchangeCrypto,
 	getSymbolNameList,
 	IConnector,
+	IConnectorBacktestService,
 	OHLC,
 	roundToMinutes,
 	subtractTimeFromDate,
 	Symbol,
 	Tick,
 } from '@packages/common';
-import { IConnectorBacktestService } from '@packages/common/src/iconnector-backtest-service';
 import { Indicator } from '@packages/indicators';
 import { OrderService } from '@packages/orders';
 
@@ -51,7 +51,7 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 		logger.log('Initializing backtest connector...');
 	}
 
-	private sleep = (ms: number) =>
+	private sleep = (ms: number): Promise<unknown> =>
 		new Promise((resolve) => setTimeout(resolve, ms));
 
 	private async getHistoricalQuotes(
@@ -237,7 +237,15 @@ export class BacktestConnector extends EventEmitter implements IConnector {
 	async run(): Promise<void> {
 		const logger = this.context.getLogger();
 
-		this.emit(ConnectorEvent.Authenticated, this.context);
+		await new Promise<void>((resolve): void => {
+			this.service.onConnect((): void => {
+				logger.log('AlpacaConnector: connected');
+
+				this.emit(ConnectorEvent.Authenticated, this.context);
+
+				resolve();
+			});
+		});
 
 		if (this.context.getSymbols().length === 0) {
 			console.error('AlpacaConnector: no symbol found');

@@ -7,15 +7,21 @@ import {
 	Position,
 	Symbol,
 } from '@packages/common';
-import { IConnectorBacktestService } from '@packages/common/src/iconnector-backtest-service';
+import {
+	IConnectorBacktestService,
+} from '@packages/common/src/iconnector-backtest-service';
 
+import { Database } from '../database';
 import { ConnectorOption } from '../options';
 
 export class AlpacaBacktestService implements IConnectorBacktestService {
+	private _options: ConnectorOption;
 	private _orders: Position[] = [];
 
 	private price = 0;
 	private date: Date | null = null;
+
+	private database?: Database;
 
 	private client: Alpaca;
 
@@ -78,6 +84,8 @@ export class AlpacaBacktestService implements IConnectorBacktestService {
 			paper: true,
 			baseUrl: 'https://paper-api.alpaca.markets',
 		});
+
+		this._options = option;
 	}
 
 	updatePrice(price: number): void {
@@ -109,7 +117,15 @@ export class AlpacaBacktestService implements IConnectorBacktestService {
 	}
 
 	onConnect(callback: () => void): void {
-		throw new Error('Method not implemented.');
+		if (this._options.DATABASE_PATH) {
+			this.database = new Database(this._options.DATABASE_PATH);
+
+			this.database.init().then((): void => {
+				console.log('Database initialized');
+
+				callback();
+			});
+		}
 	}
 	connect(): void {
 		throw new Error('Method not implemented.');
@@ -129,22 +145,31 @@ export class AlpacaBacktestService implements IConnectorBacktestService {
 	subscribeForBars(symbols: string[]): void {
 		throw new Error('Method not implemented.');
 	}
-	createOrder(order: Position): Promise<Position> {
-		order.id = this._orders.length.toString();
+
+	async createOrder(order: Position): Promise<Position> {
+		order.id = Math.random().toString(36).substring(7);
 
 		order.openPrice = this.price;
 		order.closePrice = this.price;
 		order.openDate = this.date!;
 		order.closeDate = this.date!;
 
-		this._orders.push(order);
+		if (this.database) {
+			await this.database.createPosition(order);
+		}
 
 		return Promise.resolve(order);
 	}
+
 	getPositions(): Promise<Position[]> {
-		return Promise.resolve(this._orders);
+		if (this.database) {
+			return this.database.getPositions();
+		}
+
+		return Promise.resolve([]);
 	}
-	closePosition(symbol: Symbol): Promise<Position> {
+
+	async closePosition(symbol: Symbol): Promise<Position> {
 		const order = this._orders.find(
 			(order): boolean =>
 				order.symbol.name === symbol.name && order.status === OrderStatus.Open
@@ -158,8 +183,13 @@ export class AlpacaBacktestService implements IConnectorBacktestService {
 		order.closePrice = this.price;
 		order.closeDate = this.date!;
 
+		if (this.database) {
+			await this.database.closePosition(order);
+		}
+
 		return Promise.resolve(order);
 	}
+
 	getAccount(): Promise<IAccount> {
 		const balance = this.calculateBalance(this._orders);
 		const pl = this.calculatePlOnOpenPositions(this._orders);
