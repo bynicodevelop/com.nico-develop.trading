@@ -1,11 +1,17 @@
 import { AccountService } from '@packages/account';
-import { ConnectorEvent, Context } from '@packages/common';
+import {
+	ConnectorEvent,
+	Context,
+} from '@packages/common';
 import { ExchangeCrypto } from '@packages/common/src/enums/exchanges-crypto';
 import { Symbol } from '@packages/common/src/models/symbol';
 import { Indicator } from '@packages/indicators';
 import { OrderService } from '@packages/orders';
 
-import { AlpacaConnector, AlpacaService } from './index';
+import {
+	AlpacaConnector,
+	AlpacaService,
+} from './index';
 
 const alpacaServiceMock: AlpacaService = {
 	onConnect: jest.fn(),
@@ -69,9 +75,11 @@ describe('AlpacaConnector', () => {
 		beforeEach(() => {
 			jest.clearAllMocks();
 
-			alpacaServiceMock.onConnect = jest.fn((callback: () => void): void => {
-				callback();
-			});
+			alpacaServiceMock.onConnect = jest.fn(
+				async (callback: () => void): Promise<void> => {
+					callback();
+				}
+			);
 		});
 
 		it('should emit the Authenticated event after a successful connection', async () => {

@@ -98,6 +98,8 @@ export class AlpacaService implements IConnectorService {
 			});
 
 			order.id = orderResult.id;
+			order.status = OrderStatus.Open;
+			order.openDate = new Date();
 
 			if (this.database) {
 				return await this.database.createPosition(order);

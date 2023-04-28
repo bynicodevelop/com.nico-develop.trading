@@ -148,6 +148,7 @@ describe('AlpacaService', () => {
 			side: OrderSide.Buy,
 			pl: 0,
 		} as Position;
+
 		const orderResult = { id: '123' };
 
 		beforeEach(() => {
@@ -160,10 +161,15 @@ describe('AlpacaService', () => {
 
 		it('should call createOrder on the client object with the right arguments', async () => {
 			alpacaService['database'] = {
-				createPosition: jest.fn(),
+				createPosition: jest.fn().mockResolvedValue({
+					id: '123',
+					status: OrderStatus.Open,
+					openDate: new Date(),
+				} as Position),
 			} as unknown as Database;
 
 			await alpacaService.createOrder(order);
+
 			expect(mockClient.createOrder).toHaveBeenCalledWith({
 				symbol: order.symbol.name,
 				qty: order.quantity,
@@ -172,22 +178,40 @@ describe('AlpacaService', () => {
 				time_in_force: 'gtc',
 			});
 
-			expect(alpacaService['database']['createPosition']).toHaveBeenCalledTimes(
-				1
-			);
 			expect(alpacaService['database']['createPosition']).toHaveBeenCalledWith(
 				order
 			);
 		});
 
+		it("Doit compléter les information de l'ordre", async () => {
+			alpacaService['database'] = {
+				createPosition: jest.fn(),
+			} as unknown as Database;
+
+			await alpacaService.createOrder(order);
+
+			mockClient.createOrder = jest.fn().mockResolvedValue(orderResult);
+
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledWith(
+				order
+			);
+
+			expect(order.id).toEqual('123');
+			expect(order.status).toEqual(OrderStatus.Open);
+			expect(order.openDate).toBeDefined();
+		});
+
 		it('should set the id of the order with the id returned by the Alpaca API', async () => {
 			await alpacaService.createOrder(order);
+
 			expect(order.id).toEqual(orderResult.id);
 		});
 
 		it('should throw an OrderException if an error occurs', async () => {
 			const error = new Error('Position creation failed');
+
 			jest.spyOn(mockClient, 'createOrder').mockRejectedValueOnce(error);
+
 			await expect(alpacaService.createOrder(order)).rejects.toThrow(
 				new OrderException(error.message, OrderException.ORDER_REJECTED_CODE)
 			);
