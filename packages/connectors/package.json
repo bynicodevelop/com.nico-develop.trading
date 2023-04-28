@@ -13,6 +13,7 @@
 		"@packages/indicators": "workspace:^",
 		"@packages/orders": "workspace:^",
 		"@packages/account": "workspace:^",
+		"@packages/database": "workspace:^",
 		"@packages/strategy": "workspace:^"
 	}
 }
