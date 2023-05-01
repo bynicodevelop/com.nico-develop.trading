@@ -28,10 +28,22 @@ const orderService = {} as unknown as OrderService;
 const accountService = {} as unknown as AccountService;
 const indicator = {} as unknown as Indicator;
 
-describe('AlpacaConnector', () => {
-	describe('isCurrentSymbol', () => {
-		it('should return true if the symbol is in the context', () => {
-			const connector = new AlpacaConnector({} as AlpacaService);
+describe('AlpacaConnector', (): void => {
+	describe('isCurrentSymbol', (): void => {
+		beforeEach((): void => {
+			jest.clearAllMocks();
+
+			alpacaServiceMock.onConnect = jest.fn(
+				async (callback: () => void): Promise<void> => {
+					callback();
+				}
+			);
+
+			alpacaServiceMock.addObserver = jest.fn();
+		});
+
+		it('should return true if the symbol is in the context', (): void => {
+			const connector = new AlpacaConnector(alpacaServiceMock);
 			const symbol = {
 				name: 'BTCUSD',
 				exchangeName: ExchangeCrypto.ERSX,
@@ -49,8 +61,8 @@ describe('AlpacaConnector', () => {
 			expect(result).toBe(true);
 		});
 
-		it('should return false if the symbol is not in the context', () => {
-			const connector = new AlpacaConnector({} as AlpacaService);
+		it('should return false if the symbol is not in the context', (): void => {
+			const connector = new AlpacaConnector(alpacaServiceMock);
 			const symbol = {
 				name: 'BTCUSD',
 				exchangeName: ExchangeCrypto.ERSX,
@@ -70,9 +82,9 @@ describe('AlpacaConnector', () => {
 	});
 });
 
-describe('AlpacaConnector', () => {
-	describe('run', () => {
-		beforeEach(() => {
+describe('AlpacaConnector', (): void => {
+	describe('run', (): void => {
+		beforeEach((): void => {
 			jest.clearAllMocks();
 
 			alpacaServiceMock.onConnect = jest.fn(
@@ -80,9 +92,11 @@ describe('AlpacaConnector', () => {
 					callback();
 				}
 			);
+
+			alpacaServiceMock.addObserver = jest.fn();
 		});
 
-		it('should emit the Authenticated event after a successful connection', async () => {
+		it('should emit the Authenticated event after a successful connection', async (): Promise<void> => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context(orderService, accountService, indicator);
 			const authenticatedListener = jest.fn((ctx: Context): void => {
@@ -98,7 +112,7 @@ describe('AlpacaConnector', () => {
 			expect(authenticatedListener).toHaveBeenCalledTimes(1);
 		});
 
-		it('should check subscribeForQuotes is call', async () => {
+		it('should check subscribeForQuotes is call', async (): Promise<void> => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context(orderService, accountService, indicator);
 			alpacaServiceMock.subscribeForQuotes = jest.fn();
@@ -121,7 +135,7 @@ describe('AlpacaConnector', () => {
 			]);
 		});
 
-		it('should check subscribeForBars is call', async () => {
+		it('should check subscribeForBars is call', async (): Promise<void> => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context(orderService, accountService, indicator);
 
@@ -144,7 +158,7 @@ describe('AlpacaConnector', () => {
 			]);
 		});
 
-		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async () => {
+		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async (): Promise<void> => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context(orderService, accountService, indicator);
 			const tickListener = jest.fn((ctx: Context): void => {
@@ -184,7 +198,7 @@ describe('AlpacaConnector', () => {
 			expect(tickListener).toHaveBeenCalledTimes(1);
 		});
 
-		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async () => {
+		it('should set the tick and emit the Tick event when receiving from onCryptoQuote', async (): Promise<void> => {
 			const connector = new AlpacaConnector(alpacaServiceMock);
 			const context = new Context(orderService, accountService, indicator);
 			const barListener = jest.fn((ctx: Context): void => {

@@ -5,6 +5,7 @@ import {
 import { AccountException } from '@packages/account';
 import {
 	Account,
+	ConnectorEvent,
 	IConnectorService,
 	Order,
 	OrderSide,
@@ -26,6 +27,8 @@ export class AlpacaService implements IConnectorService {
 	private stream: AlpacaCryptoClient;
 	private database?: Database;
 
+	private observable?: (event: ConnectorEvent, data?: any) => void;
+
 	constructor(option: ConnectorOption) {
 		this._option = option;
 
@@ -37,6 +40,10 @@ export class AlpacaService implements IConnectorService {
 		});
 
 		this.stream = this.client.crypto_stream_v2;
+	}
+
+	addObserver(observer: (event: any, data?: any) => void): void {
+		this.observable = observer;
 	}
 
 	async onConnect(callback: () => void): Promise<void> {
@@ -88,21 +95,27 @@ export class AlpacaService implements IConnectorService {
 	}
 
 	async createOrder(order: Position): Promise<Position | never> {
+		let result: Position = order;
+
 		try {
 			const orderResult = await this.client.createOrder({
-				symbol: order.symbol.name,
-				qty: order.quantity,
-				side: order.side,
+				symbol: result.symbol.name,
+				qty: result.quantity,
+				side: result.side,
 				type: OrderType.Market,
 				time_in_force: 'gtc',
 			});
 
-			order.id = orderResult.id;
-			order.status = OrderStatus.Open;
-			order.openDate = new Date();
+			console.log('Order created', orderResult);
+
+			result.id = orderResult.id;
+			result.status = OrderStatus.Open;
+			result.openDate = new Date();
 
 			if (this.database) {
-				return await this.database.createPosition(order);
+				const positionResult = await this.database.createPosition(result);
+
+				return positionResult;
 			}
 		} catch (error: any) {
 			console.log(error);
@@ -113,7 +126,9 @@ export class AlpacaService implements IConnectorService {
 			);
 		}
 
-		return order;
+		this.observable?.(ConnectorEvent.OrderCreated, result);
+
+		return result;
 	}
 
 	async getPositions(): Promise<Position[]> {
@@ -185,6 +200,8 @@ export class AlpacaService implements IConnectorService {
 		} catch (error: any) {
 			console.log(error);
 		}
+
+		this.observable?.(ConnectorEvent.OrderClosed, order);
 
 		return order;
 	}

@@ -28,11 +28,17 @@ export class AlpacaConnector extends EventEmitter implements IConnector {
 	constructor(private service: IConnectorService) {
 		super();
 
+		this.service.addObserver(this.observable);
+
 		const orderService: OrderService = new OrderService(this.service);
 		const accountService: AccountService = new AccountService(this.service);
 		const indicator: Indicator = new Indicator();
 
 		this.context = new Context(orderService, accountService, indicator);
+	}
+
+	private observable(event: ConnectorEvent, data?: any): void {
+		console.log(event, data);
 	}
 
 	private cryptoQuoteToTick(quote: CryptoQuote): Tick | null {

@@ -4,6 +4,8 @@ import { Position } from './models/position';
 import { Symbol } from './models/symbol';
 
 export interface IConnectorService {
+	addObserver(observer: (event: any, data?: any) => void): void;
+
 	getCryptoQuotes(
 		symbols: string[],
 		options: any

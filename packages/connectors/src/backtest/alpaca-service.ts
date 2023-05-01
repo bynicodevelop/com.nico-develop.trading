@@ -88,6 +88,10 @@ export class AlpacaBacktestService implements IConnectorBacktestService {
 		this._options = option;
 	}
 
+	addObserver(observer: (event: any, data?: any) => void): void {
+		throw new Error('Method not implemented.');
+	}
+
 	updatePrice(price: number): void {
 		this.price = price;
 
