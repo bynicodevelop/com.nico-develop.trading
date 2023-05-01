@@ -264,7 +264,7 @@ export class AlpacaService implements IConnectorService {
 				qty: result.quantity,
 				side: result.side,
 				type: OrderType.Market,
-				time_in_force: 'gtc',
+				time_in_force: 'ioc',
 				client_order_id: result.id,
 			});
 
@@ -331,14 +331,11 @@ export class AlpacaService implements IConnectorService {
 				order.symbol.name
 			);
 
-			console.log('Online order', onlineOrder);
-
 			const position = await this.client.closePosition(order.symbol.name);
-
-			console.log('Position closed', position);
 
 			order = this.createPositionModel({
 				...order,
+				id,
 				side: position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
 				status: OrderStatus.Closed,
 				closePrice: onlineOrder?.current_price || order.closePrice,
