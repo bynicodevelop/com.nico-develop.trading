@@ -5,5 +5,11 @@
 	"scripts": {},
 	"keywords": [],
 	"author": "",
-	"license": "ISC"
+	"license": "ISC",
+	"dependencies": {
+		"@packages/account": "workspace:^",
+		"@packages/indicators": "workspace:^",
+		"@packages/orders": "workspace:^",
+		"winston": "^3.8.2"
+	}
 }

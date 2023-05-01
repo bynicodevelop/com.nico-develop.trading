@@ -1,42 +1,88 @@
+import { OHLC } from '@packages/common';
+
 import { IIndicator } from './iindicator';
 import { Indicator } from './indicator';
+import {
+	PriceType,
+	Sma,
+} from './sma';
 
-describe('Indicator', () => {
-  let indicator: Indicator;
-  const mockIndicator1 = { name: 'test1', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-  const mockIndicator2 = { name: 'test2', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-  
-  beforeEach(() => {
-    indicator = new Indicator();
-    indicator.addIndicator(mockIndicator1);
-    indicator.addIndicator(mockIndicator2);
-  });
+describe('Indicator', (): void => {
+	let indicator: Indicator;
 
-  it('should add an indicator', () => {
-    const mockIndicator = { name: 'test', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-    indicator.addIndicator(mockIndicator);
-    expect(indicator['indicators']['test']).toBe(mockIndicator);
-  });
+	beforeEach((): void => {
+		jest.clearAllMocks();
 
-  it('should call nextValue on all indicators', () => {
-    indicator.nextValue(42);
-    expect(mockIndicator1.nextValue).toHaveBeenCalledWith(42);
-    expect(mockIndicator2.nextValue).toHaveBeenCalledWith(42);
-  });
+		indicator = new Indicator();
+	});
 
-  it('should return all indicators', () => {
-    const indicators = indicator.get();
-    expect(indicators).toContain(mockIndicator1);
-    expect(indicators).toContain(mockIndicator2);
-  });
+	it('should add an indicator', (): void => {
+		const mockIndicator = {
+			name: 'test',
+			init: jest.fn(),
+			nextValue: jest.fn(),
+			getValues: jest.fn(),
+		} as unknown as IIndicator;
 
-  it('should return an indicator by name', () => {
-    const indicatorByName = indicator.get('test1');
-    expect(indicatorByName).toBe(mockIndicator1);
-  });
+		indicator.addIndicator(mockIndicator);
+		expect(indicator['indicators']['test']).toBe(mockIndicator);
+	});
 
-  it('should return undefined if indicator name is not found', () => {
-    const indicatorByName = indicator.get('notfound');
-    expect(indicatorByName).toBeUndefined();
-  });
+	it('should call nextValue on all indicators', (): void => {
+		const mockIndicator1 = new Sma('test1', 10, PriceType.Close);
+		const mockIndicator2 = new Sma('test2', 10, PriceType.Close);
+
+		mockIndicator1.nextValue = jest.fn();
+		mockIndicator2.nextValue = jest.fn();
+
+		indicator.addIndicator(mockIndicator1);
+		indicator.addIndicator(mockIndicator2);
+
+		indicator.init([]);
+
+		const value = {
+			open: 42,
+			high: 42,
+			low: 42,
+			close: 42,
+			volume: 42,
+			timestamp: new Date(),
+		} as OHLC;
+
+		indicator.nextValue(value);
+
+		expect(mockIndicator1.nextValue).toHaveBeenCalledWith(value);
+		expect(mockIndicator2.nextValue).toHaveBeenCalledWith(value);
+	});
+
+	it('should return all indicators', (): void => {
+		const mockIndicator1 = new Sma('test1', 10, PriceType.Close);
+		const mockIndicator2 = new Sma('test2', 10, PriceType.Close);
+
+		indicator.addIndicator(mockIndicator1);
+		indicator.addIndicator(mockIndicator2);
+
+		const indicators = indicator.get();
+
+		expect(indicators).toContain(mockIndicator1);
+		expect(indicators).toContain(mockIndicator2);
+	});
+
+	it('should return an indicator by name', (): void => {
+		const mockIndicator = new Sma('test1', 10, PriceType.Close);
+
+		indicator.addIndicator(mockIndicator);
+
+		const indicatorByName = indicator.get('test1');
+		expect(indicatorByName).toBe(mockIndicator);
+	});
+
+	it('should return undefined if indicator name is not found', (): void => {
+		const mockIndicator = new Sma('test1', 10, PriceType.Close);
+
+		indicator.addIndicator(mockIndicator);
+
+		const indicatorByName = indicator.get('notfound');
+		expect(indicatorByName).toBeUndefined();
+	});
 });

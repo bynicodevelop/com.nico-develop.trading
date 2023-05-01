@@ -1,18 +1,25 @@
-import { IIndicator } from '../../../indicators/src/iindicator';
+import { AccountService } from '@packages/account';
+import { IIndicator, Indicator } from '@packages/indicators';
+import { OrderService } from '@packages/orders';
+
 import { OHLC } from '../models/ohlc';
 import { Symbol } from '../models/symbol';
 import { Tick } from '../models/tick';
 import { Context } from './context';
 
+const orderService = {} as unknown as OrderService;
+const accountService = {} as unknown as AccountService;
+const indicator = new Indicator();
+
 describe('Context', (): void => {
 	describe('getSymbols', (): void => {
 		it('should return an empty array when no symbols are set', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			expect(context.getSymbols()).toEqual([]);
 		});
 
 		it('should return an array of symbols when symbols are set', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const symbol = { name: 'BTCUSD' } as Symbol;
 			context.setSymbol(symbol);
 			expect(context.getSymbols()).toEqual([symbol]);
@@ -23,14 +30,14 @@ describe('Context', (): void => {
 describe('Context', (): void => {
 	describe('setSymbol', (): void => {
 		it('should set a single symbol', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const symbol = { name: 'BTCUSD' } as Symbol;
 			context.setSymbol(symbol);
 			expect(context.getSymbols()).toEqual([symbol]);
 		});
 
 		it('should set multiple symbols', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const symbols = [
 				{ name: 'BTCUSD' } as Symbol,
 				{ name: 'GOOGL' } as Symbol,
@@ -44,12 +51,12 @@ describe('Context', (): void => {
 describe('Context', (): void => {
 	describe('getTicks', (): void => {
 		it('should return an empty array when no ticks are set', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			expect(context.getTicks()).toEqual([]);
 		});
 
 		it('should return an array of ticks when ticks are set', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const tick = new Tick(
 				{ name: 'GOOGL' } as Symbol,
 				1,
@@ -67,7 +74,7 @@ describe('Context', (): void => {
 describe('Context', (): void => {
 	describe('setTick', (): void => {
 		it('should set a single tick', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const tick = new Tick(
 				{ name: 'GOOGL' } as Symbol,
 				1,
@@ -81,7 +88,7 @@ describe('Context', (): void => {
 		});
 
 		it('should set multiple ticks', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const ticks = [
 				new Tick({ name: 'APPL' } as Symbol, 1, 1, 1, 1, new Date()),
 				new Tick({ name: 'GOOGL' } as Symbol, 1, 1, 1, 1, new Date()),
@@ -95,12 +102,12 @@ describe('Context', (): void => {
 describe('Context', (): void => {
 	describe('getOHLC', (): void => {
 		it('should return an empty array when no OHLC data is set', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			expect(context.getOHLC()).toEqual([]);
 		});
 
 		it('should return an array of OHLC data when OHLC data is set', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const ohlc = [
 				{
 					symbol: { name: 'AAPL' } as Symbol,
@@ -124,9 +131,40 @@ describe('Context', (): void => {
 });
 
 describe('Context', (): void => {
+	describe('getLastOHLC', (): void => {
+		it('should return an empty array when no OHLC data is set', (): void => {
+			const context = new Context(orderService, accountService, indicator);
+			expect(context.getLastOHLC()).toBeUndefined();
+		});
+
+		it('should return the last OHLC data when OHLC data is set', (): void => {
+			const context = new Context(orderService, accountService, indicator);
+			const ohlc = [
+				{
+					symbol: { name: 'AAPL' } as Symbol,
+					open: 100,
+					high: 120,
+					low: 90,
+					close: 110,
+				} as OHLC,
+				{
+					symbol: { name: 'GOOG' } as Symbol,
+					open: 200,
+					high: 220,
+					low: 180,
+					close: 210,
+				} as OHLC,
+			];
+			context.setOHLC(ohlc);
+			expect(context.getLastOHLC()).toEqual(ohlc[1]);
+		});
+	});
+});
+
+describe('Context', (): void => {
 	describe('setOHLC', (): void => {
 		it('should set a single OHLC data', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const ohlc = {
 				symbol: { name: 'AAPL' } as Symbol,
 				open: 100,
@@ -139,7 +177,7 @@ describe('Context', (): void => {
 		});
 
 		it('should set multiple OHLC data', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const ohlc = [
 				{
 					symbol: { name: 'AAPL' } as Symbol,
@@ -161,7 +199,7 @@ describe('Context', (): void => {
 		});
 
 		it('should add new OHLC data to existing data', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const ohlc1 = {
 				symbol: { name: 'AAPL' } as Symbol,
 				open: 100,
@@ -182,7 +220,7 @@ describe('Context', (): void => {
 		});
 
 		it('should add new OHLC data to existing data when setting an array', (): void => {
-			const context = new Context();
+			const context = new Context(orderService, accountService, indicator);
 			const ohlc1 = {
 				symbol: { name: 'AAPL' } as Symbol,
 				open: 100,
@@ -207,30 +245,78 @@ describe('Context', (): void => {
 describe('Context', (): void => {
 	describe('getIndicator', (): void => {
 		it('should return all indicators when no name is provided', (): void => {
-			const context = new Context();
-			const mockIndicator1 = { name: 'test1', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-			const mockIndicator2 = { name: 'test2', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
+			const context = new Context(orderService, accountService, indicator);
+			const mockIndicator1 = {
+				name: 'test1',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
+			const mockIndicator2 = {
+				name: 'test2',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
 			context.addIndicator(mockIndicator1);
 			context.addIndicator(mockIndicator2);
 			expect(context.getIndicator()).toEqual([mockIndicator1, mockIndicator2]);
 		});
 
 		it('should return the indicator with the specified name', (): void => {
-			const context = new Context();
-			const mockIndicator1 = { name: 'test1', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-			const mockIndicator2 = { name: 'test2', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
+			const context = new Context(orderService, accountService, indicator);
+			const mockIndicator1 = {
+				name: 'test1',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
+			const mockIndicator2 = {
+				name: 'test2',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
 			context.addIndicator(mockIndicator1);
 			context.addIndicator(mockIndicator2);
 			expect(context.getIndicator('test2')).toBe(mockIndicator2);
 		});
 
 		it('should return undefined if the specified indicator does not exist', (): void => {
-			const context = new Context();
-			const mockIndicator1 = { name: 'test1', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
-			const mockIndicator2 = { name: 'test2', nextValue: jest.fn(), getValues: jest.fn() } as IIndicator;
+			const context = new Context(orderService, accountService, indicator);
+			const mockIndicator1 = {
+				name: 'test1',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
+			const mockIndicator2 = {
+				name: 'test2',
+				init: jest.fn(),
+				nextValue: jest.fn(),
+				getValues: jest.fn(),
+			} as unknown as IIndicator;
 			context.addIndicator(mockIndicator1);
 			context.addIndicator(mockIndicator2);
 			expect(context.getIndicator('test3')).toBeUndefined();
+		});
+	});
+
+	describe('Context', (): void => {
+		describe('getOrderService', (): void => {
+			it('should return the order service', (): void => {
+				const context = new Context(orderService, accountService, indicator);
+				expect(context.getOrderService()).toBe(orderService);
+			});
+		});
+	});
+
+	describe('Context', (): void => {
+		describe('getAccountService', (): void => {
+			it('should return the account service', (): void => {
+				const context = new Context(orderService, accountService, indicator);
+				expect(context.getAccountService()).toBe(accountService);
+			});
 		});
 	});
 });

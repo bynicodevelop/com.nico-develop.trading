@@ -7,7 +7,9 @@
 		"format": "prettier --write 'packages/**/*.ts' 'strategies/**/*.ts'",
 		"lint": "eslint .",
 		"test": "jest",
-		"test:watch": "jest --watchAll"
+		"test:watch": "jest --detectOpenHandles --watchAll",
+		"test:coverage": "jest --detectOpenHandles --coverage=true",
+		"test:watch:coverage": "pnpm  test:coverage --watchAll"
 	},
 	"keywords": [],
 	"author": "",

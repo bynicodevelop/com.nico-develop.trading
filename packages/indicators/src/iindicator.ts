@@ -1,7 +1,20 @@
+import { OHLC } from '@packages/common';
+
 export interface IIndicator {
-    name: string;
+	_name: string;
 
-    nextValue(value: number): void;
+	/** @todo Déplacer dans une interface uniquement utilisable par le connecteur */
+	get name(): string;
 
-    getValues(): number[] | void;
+	/** @todo Déplacer dans une interface uniquement utilisable par le connecteur */
+	init(values: OHLC[]): void;
+
+	/** @todo Déplacer dans une interface uniquement utilisable par le connecteur */
+	nextValue(value: OHLC): void;
+
+	getValues(): number[];
+
+	getLastValue(): number | null;
+
+	getValue(index: number): number | null;
 }

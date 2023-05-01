@@ -5,4 +5,7 @@ export enum ConnectorEvent {
 	OHLC = 'ohlc',
 	Tick = 'tick',
 	Trade = 'trade',
+	HistoricalOHLC = 'historical-ohlc',
+	OrderCreated = 'order-created',
+	OrderClosed = 'order-closed',
 }

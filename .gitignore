@@ -1,3 +1,6 @@
 node_modules
 pnpm-lock.yaml
 strategies/*
+logs
+apps/docs/src/.vuepress/dist
+coverage

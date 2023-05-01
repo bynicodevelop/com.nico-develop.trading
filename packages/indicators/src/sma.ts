@@ -1,29 +1,66 @@
 import { SMA } from 'technicalindicators';
 
+import { OHLC } from '@packages/common';
+
 import { IIndicator } from './iindicator';
 
+export enum PriceType {
+	Open = 'open',
+	High = 'high',
+	Low = 'low',
+	Close = 'close',
+}
+
 export class Sma implements IIndicator {
-    name = 'sma';
+	_name: string;
 
-    period: number;
-    values: number[];
+	private period: number;
+	private values: number[];
+	private price: PriceType;
+	private sma: SMA;
 
-    sma: SMA;
+	get name(): string {
+		return this._name;
+	}
 
-    constructor(period: number) {
-        this.period = period;
-        this.values = [];
+	constructor(name: string, period: number, price: PriceType) {
+		this.period = period;
+		this.values = [];
+		this.price = price;
+		this._name = name;
 
-        this.sma = new SMA({ period: this.period, values: this.values });
-    }
+		this.sma = new SMA({
+			period: this.period,
+			values: [],
+		});
+	}
 
-    nextValue(value: number): void {
-        this.values.push(value);
-        
-        this.sma.nextValue(value);
-    }
+	init(values: OHLC[]): void {
+		for (const element of values) {
+			const value = this.sma.nextValue(element[this.price]);
 
-    getValues(): number[] {
-        return this.sma.getResult();
-    }
+			if (value) {
+				this.values.push(value);
+			}
+		}
+	}
+
+	nextValue(value: OHLC): void | never {
+		const result = this.sma.nextValue(value[this.price]);
+
+		if (result) {
+			this.values.push(result);
+		}
+	}
+
+	getValues(): number[] {
+		return this.values;
+	}
+
+	getLastValue(): number | null {
+		return this.values[this.values.length - 1] || null;
+	}
+	getValue(index: number): number | null {
+		return this.values[index] || null;
+	}
 }
