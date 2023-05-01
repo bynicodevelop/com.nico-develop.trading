@@ -39,8 +39,10 @@ export class Database {
 
 		const result = await this.databaseService.get(request);
 
+		console.log('getPosition result', result);
+
 		return {
-			id: result.id,
+			id,
 			symbol: {
 				name: result.symbolName,
 				exchangeName: result.symbolExchange,
