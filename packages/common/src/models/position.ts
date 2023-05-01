@@ -1,5 +1,4 @@
 import { OrderSide, OrderStatus } from '../enums/order';
-import { subtractTimeFromDate } from '../utils/datetime';
 import { IModel } from './imodel';
 import { Symbol } from './symbol';
 
@@ -12,7 +11,7 @@ export interface IPosition extends IModel {
 	pl: number;
 	openPrice: number;
 	closePrice: number;
-	openDate: Date;
+	openDate: Date | null;
 	closeDate: Date | null;
 }
 
@@ -25,7 +24,7 @@ export class Position implements IPosition {
 	private _pl?: number;
 	private _openPrice: number;
 	private _closePrice: number;
-	private _openDate: Date;
+	private _openDate: Date | null;
 	private _closeDate: Date | null;
 
 	public get openPrice(): number {
@@ -44,11 +43,11 @@ export class Position implements IPosition {
 		this._closePrice = closePrice;
 	}
 
-	public get openDate(): Date {
+	public get openDate(): Date | null {
 		return this._openDate;
 	}
 
-	public set openDate(openDate: Date) {
+	public set openDate(openDate: Date | null) {
 		this._openDate = openDate;
 	}
 
@@ -108,7 +107,8 @@ export class Position implements IPosition {
 		this._pl = pl;
 	}
 
-	constructor(symbol: Symbol, quantity: number, side: OrderSide) {
+	constructor(id: string, symbol: Symbol, quantity: number, side: OrderSide) {
+		this._id = id;
 		this._symbol = symbol;
 		this._quantity = quantity;
 		this._side = side;
@@ -116,10 +116,11 @@ export class Position implements IPosition {
 		this._openPrice = 0;
 		this._closePrice = 0;
 
-		this._openDate = subtractTimeFromDate(new Date(), 0, 0, 0, 0);
+		this._openDate = null;
 		this._closeDate = null;
 
 		this._status = OrderStatus.Open;
+		this._pl = 0;
 	}
 
 	toJson(): Record<string, unknown> {

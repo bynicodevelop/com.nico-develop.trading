@@ -1,11 +1,11 @@
 import Alpaca from '@alpacahq/alpaca-trade-api';
-import {
-	AlpacaCryptoClient,
-} from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
+import { AlpacaCryptoClient } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
 import { AccountException } from '@packages/account';
 import {
 	Account,
 	ConnectorEvent,
+	Exception,
+	ExchangeCrypto,
 	IConnectorService,
 	Order,
 	OrderSide,
@@ -40,6 +40,167 @@ export class AlpacaService implements IConnectorService {
 		});
 
 		this.stream = this.client.crypto_stream_v2;
+	}
+
+	private createPositionModel(data: any): Position | never {
+		if (!data['id']) {
+			throw new Exception('Position id is required', 'POSITION_ID_REQUIRED');
+		}
+
+		if (!data['symbol']) {
+			throw new Exception(
+				'Position symbol is required',
+				'POSITION_SYMBOL_REQUIRED'
+			);
+		}
+
+		if (!data['symbol']['name'] || !data['symbol']['exchangeName']) {
+			throw new Exception(
+				'Position symbol must be of type Symbol',
+				'POSITION_SYMBOL_INVALID'
+			);
+		}
+
+		if (!data['quantity']) {
+			throw new Exception(
+				'Position quantity is required',
+				'POSITION_QUANTITY_REQUIRED'
+			);
+		}
+
+		if (!data['side']) {
+			throw new Exception(
+				'Position side is required',
+				'POSITION_SIDE_REQUIRED'
+			);
+		}
+
+		const position = new Position(
+			data['id'],
+			{
+				name: data['symbol']['name'],
+				exchangeName: data['symbol']['exchangeName'] as ExchangeCrypto,
+			} as Symbol,
+			data['quantity'],
+			data['side'] as OrderSide
+		);
+
+		if (data['status']) {
+			position.status = data['status'] as OrderStatus;
+		}
+
+		if (data['openPrice']) {
+			position.openPrice = parseFloat(data['openPrice']);
+		}
+
+		if (data['closePrice']) {
+			position.closePrice = parseFloat(data['closePrice']);
+		}
+
+		if (data['pl']) {
+			position.pl = parseFloat(data['pl']);
+		}
+
+		if (data['openDate']) {
+			position.openDate = new Date(data['openDate']);
+		}
+
+		if (data['closeDate']) {
+			position.closeDate = new Date(data['closeDate']);
+		}
+
+		return position;
+	}
+
+	private async savePosition(position: Position): Promise<void> {
+		if (!position.id) return;
+
+		if (this.database) {
+			if (position.status === OrderStatus.Open) {
+				if (!position.closePrice) {
+					await this.database.createPosition(position);
+				} else {
+					await this.database.updatePosition(position);
+				}
+			} else {
+				await this.database.closePosition(position);
+			}
+		}
+	}
+
+	private findPositionBySymbolName(
+		positions: any[],
+		symbolName: string
+	):
+		| {
+				current_price: string;
+				avg_entry_price: string;
+				unrealized_pl: string;
+		  }
+		| undefined {
+		return positions.find((position: any): boolean => {
+			return position.symbol === symbolName;
+		}) as
+			| {
+					current_price: string;
+					avg_entry_price: string;
+					unrealized_pl: string;
+			  }
+			| undefined;
+	}
+
+	private filterOpenPositions(positions: Position[]): Position[] {
+		return positions.filter(
+			(position: Position): boolean => position.status === OrderStatus.Open
+		);
+	}
+
+	private async syncPositions(clientPositions: any): Promise<Position[]> {
+		let positions: Position[] = [];
+
+		try {
+			if (this.database) {
+				positions = await this.database.getPositions();
+
+				const openedPositions = this.filterOpenPositions(positions);
+
+				positions = await Promise.all(
+					openedPositions
+						.filter((position: Position): boolean => {
+							return !!this.findPositionBySymbolName(
+								clientPositions,
+								position.symbol.name
+							);
+						})
+						.map(async (position: Position): Promise<Position | never> => {
+							const onlinePosition = this.findPositionBySymbolName(
+								clientPositions,
+								position.symbol.name
+							);
+
+							if (!onlinePosition) {
+								throw new OrderException(
+									'Position not found',
+									OrderException.POSITION_NOT_FOUND_CODE
+								);
+							}
+
+							return this.createPositionModel({
+								...position,
+								closeDate: new Date(),
+								closePrice:
+									onlinePosition.current_price ||
+									onlinePosition.avg_entry_price,
+								pl: onlinePosition.unrealized_pl,
+							});
+						})
+				);
+			}
+		} catch (error: any) {
+			console.log(error);
+		}
+
+		return positions;
 	}
 
 	addObserver(observer: (event: any, data?: any) => void): void {
@@ -104,99 +265,88 @@ export class AlpacaService implements IConnectorService {
 				side: result.side,
 				type: OrderType.Market,
 				time_in_force: 'gtc',
+				client_order_id: result.id,
 			});
 
 			console.log('Order created', orderResult);
 
-			result.id = orderResult.id;
-			result.status = OrderStatus.Open;
-			result.openDate = new Date();
-
-			if (this.database) {
-				const positionResult = await this.database.createPosition(result);
-
-				return positionResult;
+			if (!orderResult) {
+				throw new OrderException(
+					'Order not found',
+					OrderException.ORDER_REJECTED_CODE
+				);
 			}
+
+			const resultOrder = await this.client.getPosition(result.symbol.name);
+
+			console.log('Result order', resultOrder);
+
+			result.status = OrderStatus.Open;
+
+			result.openDate = new Date();
+			result.openPrice = parseFloat(`${resultOrder.avg_entry_price}`);
+			result.quantity = parseFloat(`${resultOrder.qty_available}`);
+			result.pl = parseFloat(`${resultOrder.unrealized_pl}`);
+
+			await this.savePosition(result);
+
+			this.observable?.(ConnectorEvent.OrderCreated, result);
 		} catch (error: any) {
 			console.log(error);
-
-			throw new OrderException(
-				error.message,
-				OrderException.ORDER_REJECTED_CODE
-			);
 		}
 
-		this.observable?.(ConnectorEvent.OrderCreated, result);
-
-		return result;
+		return order;
 	}
 
 	async getPositions(): Promise<Position[]> {
-		let positions: any[] = [];
+		let positions: Position[] = [];
 
 		try {
-			positions = await this.client.getPositions();
-
 			if (this.database) {
-				const databasePositions = await this.database.getPositions();
+				const clientPositions = await this.client.getPositions();
 
-				positions = positions.map((position: any) => {
-					const databasePosition = databasePositions.find(
-						(databasePosition: any): boolean =>
-							databasePosition.id === position.asset_id
-					);
+				positions = await this.syncPositions(clientPositions);
 
-					return { ...position, ...databasePosition };
-				});
+				for (const position of positions) {
+					await this.savePosition(position);
+				}
 			}
 		} catch (error: any) {
-			console.log(error);
+			console.log(error.message);
 		}
 
-		return positions.map(
-			(position: any): Position =>
-				({
-					id: position.asset_id,
-					symbol: {
-						name: position.symbol,
-						exchangeName: position.exchange,
-					},
-					quantity: position.qty,
-					side: position.side,
-					pl: position.unrealized_pl,
-					status: OrderStatus.Open,
-					openDate: position.openDate,
-					openPrice: position.openPrice,
-				} as Position)
-		);
+		return positions;
 	}
 
-	async closePosition(symbol: Symbol): Promise<Position> {
-		const order: Position = {} as Position;
+	async closePosition(id: string): Promise<Position> {
+		let order = (await this.database?.getPosition(id)) as Position;
 
 		try {
-			const position = await this.client.closePosition(symbol.name);
+			const clientPositions = await this.client.getPositions();
+
+			const positions = await this.syncPositions(clientPositions);
+
+			const onlineOrder = this.findPositionBySymbolName(
+				positions,
+				order.symbol.name
+			);
+
+			console.log('Online order', onlineOrder);
+
+			const position = await this.client.closePosition(order.symbol.name);
 
 			console.log('Position closed', position);
 
-			order.id = position.asset_id;
-			order.symbol = {
-				name: position.symbol,
-				exchangeName: position.exchange,
-			};
-			order.quantity = position.qty;
-			order.side = position.side === 'long' ? OrderSide.Buy : OrderSide.Sell;
-			order.pl = position.unrealized_pl;
+			order = this.createPositionModel({
+				...order,
+				side: position.side === 'long' ? OrderSide.Buy : OrderSide.Sell,
+				status: OrderStatus.Closed,
+				closePrice: onlineOrder?.current_price || order.closePrice,
+				pl: onlineOrder?.unrealized_pl || order.pl || 0,
+				closeDate: new Date(),
+			});
 
-			order.closeDate = new Date();
-
-			if (this.database) {
-				const positionClosed = await this.database.closePosition(order);
-
-				order.openDate = positionClosed.openDate;
-				order.openPrice = positionClosed.openPrice;
-				order.status = positionClosed.status;
-			}
+			await this.savePosition(order);
 		} catch (error: any) {
 			console.log(error);
 		}

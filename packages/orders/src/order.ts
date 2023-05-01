@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import {
 	IConnectorService,
 	Order,
@@ -29,7 +31,7 @@ export class OrderService {
 	 */
 	async buy(symbol: Symbol, quantity: number): Promise<Position | never> {
 		return this.connectorService.createOrder(
-			new Position(symbol, quantity, OrderSide.Buy)
+			new Position(uuidv4(), symbol, quantity, OrderSide.Buy)
 		);
 	}
 
@@ -45,7 +47,7 @@ export class OrderService {
 	 */
 	async sell(symbol: Symbol, quantity: number): Promise<Position | never> {
 		return this.connectorService.createOrder(
-			new Position(symbol, quantity, OrderSide.Sell)
+			new Position(uuidv4(), symbol, quantity, OrderSide.Sell)
 		);
 	}
 
@@ -71,8 +73,8 @@ export class OrderService {
 	 * @see {@link AlpacaBacktestService} for class definition in backtest mode
 	 * @see {@link AlpacaConnector} for class definition in live mode
 	 */
-	async closePosition(symbol: Symbol): Promise<Position | never> {
-		return this.connectorService.closePosition(symbol);
+	async closePosition(id: string): Promise<Position | never> {
+		return this.connectorService.closePosition(id);
 	}
 
 	async getClosedPositions(

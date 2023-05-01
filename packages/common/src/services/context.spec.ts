@@ -1,8 +1,5 @@
 import { AccountService } from '@packages/account';
-import {
-	IIndicator,
-	Indicator,
-} from '@packages/indicators';
+import { IIndicator, Indicator } from '@packages/indicators';
 import { OrderService } from '@packages/orders';
 
 import { OHLC } from '../models/ohlc';
@@ -129,6 +126,37 @@ describe('Context', (): void => {
 			];
 			context.setOHLC(ohlc);
 			expect(context.getOHLC()).toEqual(ohlc);
+		});
+	});
+});
+
+describe('Context', (): void => {
+	describe('getLastOHLC', (): void => {
+		it('should return an empty array when no OHLC data is set', (): void => {
+			const context = new Context(orderService, accountService, indicator);
+			expect(context.getLastOHLC()).toBeUndefined();
+		});
+
+		it('should return the last OHLC data when OHLC data is set', (): void => {
+			const context = new Context(orderService, accountService, indicator);
+			const ohlc = [
+				{
+					symbol: { name: 'AAPL' } as Symbol,
+					open: 100,
+					high: 120,
+					low: 90,
+					close: 110,
+				} as OHLC,
+				{
+					symbol: { name: 'GOOG' } as Symbol,
+					open: 200,
+					high: 220,
+					low: 180,
+					close: 210,
+				} as OHLC,
+			];
+			context.setOHLC(ohlc);
+			expect(context.getLastOHLC()).toEqual(ohlc[1]);
 		});
 	});
 });
@@ -271,6 +299,24 @@ describe('Context', (): void => {
 			context.addIndicator(mockIndicator1);
 			context.addIndicator(mockIndicator2);
 			expect(context.getIndicator('test3')).toBeUndefined();
+		});
+	});
+
+	describe('Context', (): void => {
+		describe('getOrderService', (): void => {
+			it('should return the order service', (): void => {
+				const context = new Context(orderService, accountService, indicator);
+				expect(context.getOrderService()).toBe(orderService);
+			});
+		});
+	});
+
+	describe('Context', (): void => {
+		describe('getAccountService', (): void => {
+			it('should return the account service', (): void => {
+				const context = new Context(orderService, accountService, indicator);
+				expect(context.getAccountService()).toBe(accountService);
+			});
 		});
 	});
 });

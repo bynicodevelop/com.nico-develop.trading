@@ -5,10 +5,17 @@ import { AccountService } from './account';
 describe('AccountService', () => {
 	let accountService: AccountService;
 	let connectorServiceMock: jest.Mocked<IConnectorService>;
+	let accountMock: Account;
 
 	beforeEach(() => {
+		accountMock = {
+			id: 'my-account-id',
+			balance: 1000,
+			equity: 500,
+		} as Account;
+
 		connectorServiceMock = {
-			getAccount: jest.fn(),
+			getAccount: jest.fn().mockResolvedValue(accountMock),
 		} as unknown as jest.Mocked<IConnectorService>;
 
 		accountService = new AccountService(connectorServiceMock);
@@ -16,16 +23,9 @@ describe('AccountService', () => {
 
 	describe('getAccount', () => {
 		it('should return an Account object', async () => {
-			const expectedAccount: Account = {
-				id: 'my-account-id',
-				balance: 1000,
-			} as Account;
-
-			connectorServiceMock.getAccount.mockResolvedValueOnce(expectedAccount);
-
 			const account = await accountService.getAccount();
 
-			expect(account).toEqual(expectedAccount);
+			expect(account).toEqual(accountMock);
 			expect(connectorServiceMock.getAccount).toHaveBeenCalledTimes(1);
 		});
 
@@ -38,6 +38,24 @@ describe('AccountService', () => {
 			await expect(accountService.getAccount()).rejects.toThrowError(
 				errorMessage
 			);
+			expect(connectorServiceMock.getAccount).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('equity', () => {
+		it('Doit retourner le solde du compte', async () => {
+			const equity = await accountService.equity();
+
+			expect(equity).toEqual(accountMock.equity);
+			expect(connectorServiceMock.getAccount).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('pl', () => {
+		it('Doit retourner le solde du compte', async () => {
+			const pl = await accountService.pl();
+
+			expect(pl).toEqual(accountMock.balance - accountMock.equity);
 			expect(connectorServiceMock.getAccount).toHaveBeenCalledTimes(1);
 		});
 	});

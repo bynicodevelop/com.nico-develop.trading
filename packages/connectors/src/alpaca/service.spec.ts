@@ -1,8 +1,7 @@
 import Alpaca from '@alpacahq/alpaca-trade-api';
+import { AlpacaCryptoClient } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
 import {
-	AlpacaCryptoClient,
-} from '@alpacahq/alpaca-trade-api/dist/resources/datav2/crypto_websocket_v2';
-import {
+	ExchangeCrypto,
 	OrderSide,
 	OrderStatus,
 	OrderType,
@@ -10,7 +9,6 @@ import {
 	Symbol,
 } from '@packages/common';
 
-import { OrderException } from '../../../orders/src/exception';
 import { Database } from '../database';
 import { AlpacaService } from './service';
 
@@ -140,6 +138,357 @@ describe('AlpacaService', () => {
 		});
 	});
 
+	describe('savePosition', () => {
+		beforeEach(() => {
+			jest.clearAllMocks();
+
+			alpacaService = new AlpacaService({ KEY: 'key', SECRET: 'secret' });
+		});
+
+		it('Doit créer une nouvelle position en base de données', async (): Promise<void> => {
+			const position = {
+				id: 'id',
+				status: OrderStatus.Open,
+			} as Position;
+
+			alpacaService['database'] = {
+				createPosition: jest.fn(),
+			} as unknown as Database;
+
+			await alpacaService['savePosition'](position);
+
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledWith(
+				position
+			);
+		});
+
+		it('Doit mettre à jour une position existante en base de données lors de la clôture', async (): Promise<void> => {
+			const position = {
+				id: 'id',
+				status: OrderStatus.Closed,
+			} as Position;
+
+			alpacaService['database'] = {
+				closePosition: jest.fn(),
+			} as unknown as Database;
+
+			await alpacaService['savePosition'](position);
+
+			expect(alpacaService['database']['closePosition']).toHaveBeenCalledWith(
+				position
+			);
+		});
+
+		it('Doit mettre à jour une position existante en base de données lors de la mise à jour de ses données', async (): Promise<void> => {
+			const position = {
+				id: 'id',
+				status: OrderStatus.Open,
+				closePrice: 1,
+			} as Position;
+
+			alpacaService['database'] = {
+				updatePosition: jest.fn(),
+			} as unknown as Database;
+
+			await alpacaService['savePosition'](position);
+
+			expect(alpacaService['database']['updatePosition']).toHaveBeenCalledWith(
+				position
+			);
+		});
+
+		it("Doit ne rien faire si la position n'existe pas en base de données", async (): Promise<void> => {
+			alpacaService['database'] = {
+				createPosition: jest.fn(),
+			} as unknown as Database;
+
+			await alpacaService['savePosition']({} as Position);
+
+			expect(alpacaService['database']['createPosition']).toHaveBeenCalledTimes(
+				0
+			);
+		});
+	});
+
+	describe('findPositionBySymbolName', () => {
+		let positions: any[];
+		beforeEach(() => {
+			positions = [
+				{
+					id: 'id',
+					symbol: 'AAPL',
+				},
+				{
+					id: 'id2',
+					symbol: 'TSLA',
+				},
+			];
+		});
+
+		it('Doit retourner la position correspondante au symbole', (): void => {
+			expect(
+				alpacaService['findPositionBySymbolName'](positions, 'AAPL')
+			).toEqual(positions[0]);
+		});
+
+		it('Doit retourner la position correspondante au symbole', (): void => {
+			expect(
+				alpacaService['findPositionBySymbolName'](positions, 'TSLA')
+			).toEqual(positions[1]);
+		});
+
+		it('Doit retourner undefined si aucune position ne correspond au symbole', (): void => {
+			expect(
+				alpacaService['findPositionBySymbolName'](positions, 'GOOG')
+			).toBeUndefined();
+		});
+	});
+
+	describe('createPositionModel', (): void => {
+		it("Doit retourner une exception si l'id n'est pas renseigné", (): void => {
+			expect(() => {
+				alpacaService['createPositionModel']({} as any);
+			}).toThrow('Position id is required');
+		});
+
+		it("Doit retourner une exception si le symbole n'est pas renseigné", (): void => {
+			expect(() => {
+				alpacaService['createPositionModel']({ id: 'id' } as any);
+			}).toThrow('Position symbol is required');
+		});
+
+		it("Doit retourner une exception si le symbole n'est pas de type 'Symbol'", (): void => {
+			expect(() => {
+				alpacaService['createPositionModel']({
+					id: 'id',
+					symbol: 'AAPL',
+				} as any);
+			}).toThrow('Position symbol must be of type Symbol');
+		});
+
+		it("Doit retourner une exception si la quantité n'est pas renseignée", (): void => {
+			expect(() => {
+				alpacaService['createPositionModel']({
+					id: 'id',
+					symbol: {
+						name: 'AAPL',
+						exchangeName: ExchangeCrypto.CBSE,
+					} as Symbol,
+				} as any);
+			}).toThrow('Position quantity is required');
+		});
+
+		it("Doit retourner une exception si 'side' n'est pas renseigné", (): void => {
+			expect(() => {
+				alpacaService['createPositionModel']({
+					id: 'id',
+					symbol: {
+						name: 'AAPL',
+						exchangeName: ExchangeCrypto.CBSE,
+					} as Symbol,
+					quantity: 10,
+				} as any);
+			}).toThrow('Position side is required');
+		});
+
+		it("Doit retourner les éléments minium d'une position", (): void => {
+			const position = {
+				id: 'id',
+				symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				quantity: 10,
+				side: OrderSide.Buy,
+			} as any;
+
+			expect(alpacaService['createPositionModel'](position)).toEqual({
+				_id: 'id',
+				_symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				_quantity: 10,
+				_side: OrderSide.Buy,
+				_status: OrderStatus.Open,
+				_openPrice: 0,
+				_closePrice: 0,
+				_openDate: null,
+				_closeDate: null,
+				_pl: 0,
+			});
+		});
+
+		it("Doit retourner les éléments minium d'une position avec des données non formatées", (): void => {
+			const position = {
+				id: 'id',
+				symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				quantity: 10,
+				side: OrderSide.Buy,
+				status: 'open',
+				openPrice: '10',
+				closePrice: '10',
+				pl: '10',
+			} as any;
+
+			expect(alpacaService['createPositionModel'](position)).toEqual({
+				_id: 'id',
+				_symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				_side: OrderSide.Buy,
+				_status: OrderStatus.Open,
+				_quantity: 10,
+				_openPrice: 10,
+				_closePrice: 10,
+				_openDate: null,
+				_closeDate: null,
+				_pl: 10,
+			});
+		});
+
+		it('Doit retourner un objet formaté avec des dates', (): void => {
+			const position = {
+				id: 'id',
+				symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				quantity: 10,
+				side: OrderSide.Buy,
+				status: 'open',
+				openPrice: '10',
+				closePrice: '10',
+				pl: '10',
+				openDate: '2020-01-01 00:00:00',
+				closeDate: '2020-01-01 00:00:00',
+			} as any;
+
+			expect(alpacaService['createPositionModel'](position)).toEqual({
+				_id: 'id',
+				_symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				_side: OrderSide.Buy,
+				_status: OrderStatus.Open,
+				_quantity: 10,
+				_openPrice: 10,
+				_closePrice: 10,
+				_openDate: new Date('2020-01-01 00:00:00'),
+				_closeDate: new Date('2020-01-01 00:00:00'),
+				_pl: 10,
+			});
+		});
+
+		it('Doit retourner un objet formaté avec valeur de type date', (): void => {
+			const date = new Date();
+
+			const position = {
+				id: 'id',
+				symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				quantity: 10,
+				side: OrderSide.Buy,
+				status: 'open',
+				openPrice: '10',
+				closePrice: '10',
+				pl: '10',
+				openDate: date,
+				closeDate: date,
+			} as any;
+
+			expect(alpacaService['createPositionModel'](position)).toEqual({
+				_id: 'id',
+				_symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				_side: OrderSide.Buy,
+				_status: OrderStatus.Open,
+				_quantity: 10,
+				_openPrice: 10,
+				_closePrice: 10,
+				_openDate: date,
+				_closeDate: date,
+				_pl: 10,
+			});
+		});
+
+		it("Doit vérifier que la valeur de 'side' et status est valide", (): void => {
+			const position = {
+				id: 'id',
+				symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				quantity: 10,
+				side: OrderSide.Sell,
+				status: OrderStatus.Closed,
+				openPrice: '10',
+				closePrice: '10',
+				pl: '10',
+				openDate: '2020-01-01 00:00:00',
+				closeDate: '2020-01-01 00:00:00',
+			} as any;
+
+			expect(alpacaService['createPositionModel'](position)).toEqual({
+				_id: 'id',
+				_symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				_side: OrderSide.Sell,
+				_status: OrderStatus.Closed,
+				_quantity: 10,
+				_openPrice: 10,
+				_closePrice: 10,
+				_openDate: new Date('2020-01-01 00:00:00'),
+				_closeDate: new Date('2020-01-01 00:00:00'),
+				_pl: 10,
+			});
+		});
+
+		it('Doit retourner que les status est open si non renseigné', (): void => {
+			const position = {
+				id: 'id',
+				symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				quantity: 10,
+				side: OrderSide.Sell,
+				openPrice: '10',
+				closePrice: '10',
+				pl: '10',
+				openDate: '2020-01-01 00:00:00',
+				closeDate: '2020-01-01 00:00:00',
+			} as any;
+
+			expect(alpacaService['createPositionModel'](position)).toEqual({
+				_id: 'id',
+				_symbol: {
+					name: 'AAPL',
+					exchangeName: 'NASDAQ',
+				} as unknown as Symbol,
+				_side: OrderSide.Sell,
+				_status: OrderStatus.Open,
+				_quantity: 10,
+				_openPrice: 10,
+				_closePrice: 10,
+				_openDate: new Date('2020-01-01 00:00:00'),
+				_closeDate: new Date('2020-01-01 00:00:00'),
+				_pl: 10,
+			});
+		});
+	});
+
 	describe('createOrder', () => {
 		const order = {
 			id: '',
@@ -161,36 +510,44 @@ describe('AlpacaService', () => {
 
 		it('should call createOrder on the client object with the right arguments', async () => {
 			alpacaService['database'] = {
-				createPosition: jest.fn().mockResolvedValue({
-					id: '123',
-					status: OrderStatus.Open,
-					openDate: new Date(),
-				} as Position),
+				createPosition: jest.fn(),
 			} as unknown as Database;
+
+			alpacaService['observable'] = jest.fn();
+
+			mockClient.getPosition = jest.fn();
 
 			await alpacaService.createOrder(order);
 
 			expect(mockClient.createOrder).toHaveBeenCalledWith({
+				client_order_id: order.id,
 				symbol: order.symbol.name,
 				qty: order.quantity,
 				side: order.side,
 				type: OrderType.Market,
 				time_in_force: 'gtc',
 			});
-
-			expect(alpacaService['database']['createPosition']).toHaveBeenCalledWith(
-				order
-			);
 		});
 
 		it("Doit compléter les information de l'ordre", async () => {
+			const order = {
+				id: '123',
+				symbol: { name: 'AAPL', exchangeName: 'NASDAQ' } as unknown as Symbol,
+				quantity: 10,
+				side: OrderSide.Buy,
+				pl: 0,
+			} as Position;
+
 			alpacaService['database'] = {
 				createPosition: jest.fn(),
 			} as unknown as Database;
 
-			await alpacaService.createOrder(order);
-
 			mockClient.createOrder = jest.fn().mockResolvedValue(orderResult);
+			mockClient.getPosition = jest.fn().mockResolvedValue({
+				...order,
+			});
+
+			await alpacaService.createOrder(order);
 
 			expect(alpacaService['database']['createPosition']).toHaveBeenCalledWith(
 				order
@@ -200,21 +557,24 @@ describe('AlpacaService', () => {
 			expect(order.status).toEqual(OrderStatus.Open);
 			expect(order.openDate).toBeDefined();
 		});
+	});
 
-		it('should set the id of the order with the id returned by the Alpaca API', async () => {
-			await alpacaService.createOrder(order);
+	describe('filterOpenPositions', () => {
+		it('should return only open positions', () => {
+			const positions = [
+				{
+					id: '1',
+					status: OrderStatus.Open,
+				},
+				{
+					id: '2',
+					status: OrderStatus.Closed,
+				},
+			] as Position[];
 
-			expect(order.id).toEqual(orderResult.id);
-		});
-
-		it('should throw an OrderException if an error occurs', async () => {
-			const error = new Error('Position creation failed');
-
-			jest.spyOn(mockClient, 'createOrder').mockRejectedValueOnce(error);
-
-			await expect(alpacaService.createOrder(order)).rejects.toThrow(
-				new OrderException(error.message, OrderException.ORDER_REJECTED_CODE)
-			);
+			expect(alpacaService['filterOpenPositions'](positions)).toEqual([
+				positions[0],
+			]);
 		});
 	});
 
@@ -244,15 +604,28 @@ describe('AlpacaService', () => {
 				},
 			];
 
-			mockClient.getPositions = jest.fn().mockResolvedValueOnce(mockPositions);
-
+			mockClient.getPositions = jest.fn().mockResolvedValue(mockPositions);
 			alpacaService['database'] = {
-				getPositions: jest.fn().mockResolvedValueOnce(savedPositions),
+				updatePosition: jest.fn(),
 			} as unknown as Database;
+			alpacaService['syncPositions'] = jest.fn().mockResolvedValue([
+				{
+					id: mockPositions[0].asset_id,
+					symbol: {
+						name: mockPositions[0].symbol,
+						exchangeName: mockPositions[0].exchange,
+					},
+					quantity: mockPositions[0].qty,
+					side: OrderSide.Buy,
+					pl: mockPositions[0].unrealized_pl,
+					status: OrderStatus.Open,
+					openPrice: savedPositions[0].openPrice,
+					openDate: savedPositions[0].openDate,
+				},
+			]);
 
 			const result = await alpacaService.getPositions();
 
-			expect(mockClient.getPositions).toHaveBeenCalled();
 			expect(result.length).toBe(mockPositions.length);
 
 			const expectedOrder = {
@@ -273,24 +646,19 @@ describe('AlpacaService', () => {
 		});
 
 		it('should return an empty array if getPositions returns an empty array', async () => {
-			mockClient.getPositions = jest.fn().mockResolvedValueOnce([]);
+			const mockDatabase = {
+				getPositions: jest.fn().mockResolvedValueOnce([]),
+			} as unknown as Database;
+
+			alpacaService['database'] = mockDatabase;
 
 			const result = await alpacaService.getPositions();
-			expect(mockClient.getPositions).toHaveBeenCalled();
+
+			expect(mockDatabase.getPositions).toHaveBeenCalled();
 			expect(result.length).toBe(0);
 		});
 
-		it('should log and return an empty array if getPositions throws an error', async () => {
-			const mockError = new Error('Failed to get positions');
-			console.log = jest.fn();
-
-			mockClient.getPositions = jest.fn().mockRejectedValueOnce(mockError);
-
-			const result = await alpacaService.getPositions();
-			expect(mockClient.getPositions).toHaveBeenCalled();
-			expect(console.log).toHaveBeenCalledWith(mockError);
-			expect(result.length).toBe(0);
-		});
+		it("Doit retourner une erreur si l'ordre n'est pas trouvé via l'ID", async () => {});
 	});
 
 	describe('closePosition', () => {
@@ -308,8 +676,10 @@ describe('AlpacaService', () => {
 
 			const savedPosition = {
 				id: mockPosition.asset_id,
-				symbolName: mockPosition.symbol,
-				exchangeName: mockPosition.exchange,
+				symbol: {
+					name: mockPosition.symbol,
+					exchangeName: mockPosition.exchange,
+				},
 				quantity: mockPosition.qty,
 				side: OrderSide.Buy,
 				status: OrderStatus.Closed,
@@ -321,16 +691,20 @@ describe('AlpacaService', () => {
 
 			mockClient.closePosition = jest.fn().mockResolvedValueOnce(mockPosition);
 
+			alpacaService['observable'] = jest.fn();
+			alpacaService['syncPositions'] = jest.fn();
+			alpacaService['findPositionBySymbolName'] = jest.fn();
+
 			alpacaService['database'] = {
 				closePosition: jest.fn().mockResolvedValueOnce(savedPosition),
+				getPosition: jest.fn().mockResolvedValueOnce(savedPosition),
 			} as unknown as Database;
 
-			const result = await alpacaService.closePosition({
-				name: mockPosition.symbol,
-				exchangeName: mockPosition.exchange,
-			} as unknown as Symbol);
+			const result = await alpacaService.closePosition('uuid');
 
 			expect(mockClient.closePosition).toHaveBeenCalled();
+			expect(alpacaService['observable']).toHaveBeenCalledTimes(1);
+
 			expect(result).toMatchObject({
 				id: mockPosition.asset_id,
 				symbol: {

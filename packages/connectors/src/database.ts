@@ -1,8 +1,4 @@
-import {
-	OrderSide,
-	OrderStatus,
-	Position,
-} from '@packages/common';
+import { OrderSide, OrderStatus, Position } from '@packages/common';
 import { SQLiteConnector } from '@packages/database';
 
 export class Database {
@@ -32,6 +28,32 @@ export class Database {
                 quantity REAL NOT NULL,
                 pl REAL
             )`);
+	}
+
+	async getPosition(id: string): Promise<Position> {
+		if (!id) {
+			throw new Error('Id is not defined');
+		}
+
+		const request = `SELECT * FROM positions WHERE id = '${id}'`;
+
+		const result = await this.databaseService.get(request);
+
+		return {
+			id: result.id,
+			symbol: {
+				name: result.symbolName,
+				exchangeName: result.symbolExchange,
+			},
+			side: result.side as OrderSide,
+			status: result.status as OrderStatus,
+			openDate: result.openDate,
+			closeDate: result.closeDate,
+			openPrice: result.openPrice,
+			closePrice: result.closePrice,
+			quantity: result.quantity,
+			pl: result.pl ?? 0,
+		} as Position;
 	}
 
 	async getPositions(): Promise<Position[]> {
@@ -93,13 +115,23 @@ export class Database {
 		return position;
 	}
 
+	async updatePosition(position: Position): Promise<Position> {
+		const request = `UPDATE positions SET
+			status = '${position.status}',
+			closeDate = '${position.closeDate}',
+			closePrice = ${position.closePrice},
+			pl = ${position.pl}
+		WHERE id = '${position.id}'`;
+
+		console.log(request);
+
+		await this.databaseService.exec(request);
+
+		return position;
+	}
+
 	async closePosition(position: Position): Promise<Position> {
-		await this.databaseService.exec(`UPDATE positions SET
-                status = '${position.status}',
-                closeDate = '${position.closeDate}',
-                closePrice = ${position.closePrice},
-                pl = ${position.pl}
-            WHERE id = '${position.id}'`);
+		await this.updatePosition(position);
 
 		return position;
 	}

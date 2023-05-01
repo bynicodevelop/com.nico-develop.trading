@@ -7,6 +7,10 @@ import {
 
 import { OrderService } from './order';
 
+jest.mock('uuid', (): object => ({
+	v4: (): string => 'uuid',
+}));
+
 const mockConnectorService = {
 	createOrder: jest.fn(),
 	getPositions: jest.fn(),
@@ -28,18 +32,20 @@ describe('OrderService', (): void => {
 	describe('buy', (): void => {
 		it('should call createOrder on the ConnectorService with a buy order', async (): Promise<void> => {
 			await orderService.buy({} as Symbol, 1);
-			expect(mockConnectorService.createOrder).toHaveBeenCalledWith(
-				new Position({} as Symbol, 1, OrderSide.Buy)
-			);
+
+			const order = new Position('uuid', {} as Symbol, 1, OrderSide.Buy);
+
+			expect(mockConnectorService.createOrder).toHaveBeenCalledWith(order);
 		});
 	});
 
 	describe('sell', (): void => {
 		it('should call createOrder on the ConnectorService with a sell order', async (): Promise<void> => {
 			await orderService.sell({} as Symbol, 1);
-			expect(mockConnectorService.createOrder).toHaveBeenCalledWith(
-				new Position({} as Symbol, 1, OrderSide.Sell)
-			);
+
+			const order = new Position('uuid', {} as Symbol, 1, OrderSide.Sell);
+
+			expect(mockConnectorService.createOrder).toHaveBeenCalledWith(order);
 		});
 	});
 
@@ -52,10 +58,9 @@ describe('OrderService', (): void => {
 
 	describe('closePosition', (): void => {
 		it('should call closePosition on the ConnectorService with the symbol', async (): Promise<void> => {
-			await orderService.closePosition({} as Symbol);
-			expect(mockConnectorService.closePosition).toHaveBeenCalledWith(
-				{} as Symbol
-			);
+			await orderService.closePosition('uuid');
+
+			expect(mockConnectorService.closePosition).toHaveBeenCalledWith('uuid');
 		});
 	});
 

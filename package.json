@@ -8,7 +8,8 @@
 		"lint": "eslint .",
 		"test": "jest",
 		"test:watch": "jest --detectOpenHandles --watchAll",
-		"test:coverage": "jest --detectOpenHandles --coverage=true"
+		"test:coverage": "jest --detectOpenHandles --coverage=true",
+		"test:watch:coverage": "pnpm  test:coverage --watchAll"
 	},
 	"keywords": [],
 	"author": "",

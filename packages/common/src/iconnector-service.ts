@@ -34,7 +34,7 @@ export interface IConnectorService {
 
 	getPositions(): Promise<Position[]>;
 
-	closePosition(symbol: Symbol): Promise<Position | never>;
+	closePosition(id: string): Promise<Position | never>;
 
 	getAccount(): Promise<Account>;
 

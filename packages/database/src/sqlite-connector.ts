@@ -1,13 +1,6 @@
-import {
-	existsSync,
-	mkdirSync,
-	writeFileSync,
-} from 'fs';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
-import {
-	Database,
-	open,
-} from 'sqlite';
+import { Database, open } from 'sqlite';
 import sqlite3, { Statement } from 'sqlite3';
 
 export class SQLiteConnector {
@@ -35,9 +28,11 @@ export class SQLiteConnector {
 	}
 
 	async all(request: string): Promise<any[]> {
-		const result = await this.db.all(request);
+		return await this.db.all(request);
+	}
 
-		return result;
+	async get(request: string): Promise<any> {
+		return await this.db.get(request);
 	}
 
 	async exec(request: string): Promise<void> {

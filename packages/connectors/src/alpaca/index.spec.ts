@@ -1,17 +1,12 @@
+import { CryptoBar } from '@alpacahq/alpaca-trade-api/dist/resources/datav2/entityv2';
 import { AccountService } from '@packages/account';
-import {
-	ConnectorEvent,
-	Context,
-} from '@packages/common';
+import { ConnectorEvent, Context } from '@packages/common';
 import { ExchangeCrypto } from '@packages/common/src/enums/exchanges-crypto';
 import { Symbol } from '@packages/common/src/models/symbol';
 import { Indicator } from '@packages/indicators';
 import { OrderService } from '@packages/orders';
 
-import {
-	AlpacaConnector,
-	AlpacaService,
-} from './index';
+import { AlpacaConnector, AlpacaService } from './index';
 
 const alpacaServiceMock: AlpacaService = {
 	onConnect: jest.fn(),
@@ -78,6 +73,47 @@ describe('AlpacaConnector', (): void => {
 			const result = connector['isCurrentSymbol'](ExchangeCrypto.BNCU);
 
 			expect(result).toBe(false);
+		});
+	});
+
+	describe('cryptoQuoteToTick', (): void => {
+		it('should return null if the symbol is not in the context', (): void => {
+			const connector = new AlpacaConnector(alpacaServiceMock);
+
+			connector['isCurrentSymbol'] = jest.fn().mockReturnValue(false);
+
+			const result = connector['cryptoQuoteToTick']({
+				Symbol: 'BTCUSD',
+				Exchange: ExchangeCrypto.BNCU,
+				AskPrice: 1,
+				AskSize: 1,
+				BidPrice: 1,
+				BidSize: 1,
+				Timestamp: '2020-01-01',
+			});
+
+			expect(result).toBeNull();
+		});
+	});
+
+	describe('cryptoBarToOHLC', (): void => {
+		it('should return null if the symbol is not in the context', (): void => {
+			const connector = new AlpacaConnector(alpacaServiceMock);
+
+			connector['isCurrentSymbol'] = jest.fn().mockReturnValue(false);
+
+			const result = connector['cryptoBarToOHLC']({
+				Symbol: 'BTCUSD',
+				Exchange: ExchangeCrypto.BNCU,
+				Open: 1,
+				High: 1,
+				Low: 1,
+				Close: 1,
+				Volume: 1,
+				Timestamp: '2020-01-01',
+			} as unknown as CryptoBar);
+
+			expect(result).toBeNull();
 		});
 	});
 });

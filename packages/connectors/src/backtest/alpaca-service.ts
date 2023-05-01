@@ -7,9 +7,7 @@ import {
 	Position,
 	Symbol,
 } from '@packages/common';
-import {
-	IConnectorBacktestService,
-} from '@packages/common/src/iconnector-backtest-service';
+import { IConnectorBacktestService } from '@packages/common/src/iconnector-backtest-service';
 
 import { Database } from '../database';
 import { ConnectorOption } from '../options';
@@ -173,14 +171,13 @@ export class AlpacaBacktestService implements IConnectorBacktestService {
 		return Promise.resolve([]);
 	}
 
-	async closePosition(symbol: Symbol): Promise<Position> {
+	async closePosition(id: string): Promise<Position> {
 		const order = this._orders.find(
-			(order): boolean =>
-				order.symbol.name === symbol.name && order.status === OrderStatus.Open
+			(order): boolean => order.id === id && order.status === OrderStatus.Open
 		);
 
 		if (!order) {
-			throw new Error(`Position ${symbol} not found`);
+			throw new Error(`Position ${id} not found`);
 		}
 
 		order.status = OrderStatus.Closed;

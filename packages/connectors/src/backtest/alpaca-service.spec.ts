@@ -739,7 +739,7 @@ describe('AlpacaBacktestService', () => {
 			];
 
 			const position = await alpacaService.closePosition(
-				alpacaService['_orders'][0].symbol
+				alpacaService['_orders'][0].id
 			);
 
 			expect(position).toEqual(alpacaService['_orders'][0]);
